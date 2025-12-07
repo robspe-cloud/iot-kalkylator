@@ -64,11 +64,19 @@ with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn")
     * **Spara:** Klicka på **"Spara [Kalkylnamn] Scenario (.json)"** för att ladda ner en JSON-fil med alla aktuella inställningar för den aktiva kalkylen.
     * **Ladda:** Använd **"Ladda [Kalkylnamn] Scenario (.json)"** och välj en tidigare sparad fil. **Obs:** Efter laddning kan du behöva klicka på kalkylen i sidofältet en gång till för att se alla reglage uppdateras.
     
-    ### 5. Dela en Förinställd Kalkyl
-    Du kan dela en länk som öppnar kalkylatorn direkt på en specifik flik genom att lägga till `?kalkyl=` i slutet av din URL:
-    * **Temperatur:** `?kalkyl=temp`
-    * **IMD Vatten:** `?kalkyl=imd`
-    * **Vattenskadeskydd:** `?kalkyl=skada`
+    ### 5. Dela Appen och Förinställda Kalkyler (Länkdelning) 🔗
+    Du kan dela en länk som öppnar kalkylatorn direkt på en specifik flik. Detta är användbart för att snabbt skicka en IMD-kalkyl till en kollega, t.ex.
+
+    1.  **Hitta din Bas-URL:** Kopiera den vanliga adressen från din webbläsare (t.ex. `https://[ditt-appnamn].streamlit.app/`).
+    2.  **Lägg till Parametern:** Lägg till `?kalkyl=` följt av önskad kalkylnyckel i slutet av din Bas-URL.
+
+    | Kalkyl du vill dela | Parameter att lägga till | Exempel på hur din länk ser ut |
+    | :--- | :--- | :--- |
+    | **IMD Vattenförbrukning** | `?kalkyl=imd` | `https://[din-app].streamlit.app/?kalkyl=imd` |
+    | **Vattenskadeskydd** | `?kalkyl=skada` | `https://[din-app].streamlit.app/?kalkyl=skada` |
+    | **Temperatur & Energi** | `?kalkyl=temp` | `https://[din-app].streamlit.app/?kalkyl=temp` |
+
+    **Viktigt:** Denna metod öppnar endast rätt flik med **standardvärdena**. Om du vill dela ett sparat scenario måste mottagaren ladda in `.json`-filen manuellt.
     """)
 st.markdown("---")
 
