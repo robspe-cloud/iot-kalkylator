@@ -41,7 +41,7 @@ def display_kpis(initial, netto, payback):
 
 st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
 
-st.title("💰 ROI Kalkylator: Fastighets-IoT")
+st.title("💰 IoT ROI Kalkylator") # UPPDATERAD TITEL
 st.markdown("---")
 
 # --- HJÄLP OCH INSTRUKTIONER (WIKI) ---
@@ -401,5 +401,5 @@ elif selected_tab == "skada":
     st.plotly_chart(fig_skada, use_container_width=True)
     
     with st.expander("Beräkningsdetaljer"):
-        st.write(f"Besparing från undvikta skadekostnader ({besparing_procent_skador:.1f}% av {tot_skadekostnad_utan_iot:,.0f} kr): **{besparing_skador_kr:,.0f} kr**")
+        st.write(f"Besparing från undvikna skadekostnader ({besparing_procent_skador:.1f}% av {tot_skadekostnad_utan_iot:,.0f} kr): **{besparing_skador_kr:,.0f} kr**")
         st.write(f"Övrig underhållsbesparing (från Excel): **{antal_lgh * uh_besparing_skada_lgh:,.0f} kr**")
