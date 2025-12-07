@@ -14,7 +14,6 @@ KEY_MAP_REVERSE = {v: k for k, v in CALC_OPTIONS.items()}
 # --- CALLBACK FUNKTION (FÖR KNAPPKLICK) ---
 def update_tab_key():
     """Uppdaterar URL-parametern när användaren klickar på en ny radio-knapp."""
-    # Denna funktion körs efter st.radio har uppdaterat 'radio_calc_selection'
     selected_display_name = st.session_state.radio_calc_selection
     new_calc_key = CALC_OPTIONS[selected_display_name]
     
@@ -61,7 +60,7 @@ st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
 st.title("💰 IoT ROI Kalkylator")
 st.markdown("---")
 
-# --- 1. HÄMTA AKTIV FLIK FRÅN URL ---
+# --- 1. HÄMTA AKTIV FLIK FRÅN URL OCH SYNKRONISERA SESSION STATE (KRITISK FIX) ---
 query_params = st.query_params
 url_calc_key = query_params.get("kalkyl", ["temp"])[0].lower() # Hämta 'imd', 'skada', eller default 'temp'
 
@@ -69,10 +68,17 @@ url_calc_key = query_params.get("kalkyl", ["temp"])[0].lower() # Hämta 'imd', '
 active_tab = url_calc_key if url_calc_key in CALC_OPTIONS.values() else "temp"
 radio_default_name = KEY_MAP_REVERSE.get(active_tab, "🌡️ Temperatur & Energi")
 
-# Sätt Session State för radioknappen om den inte är satt, baserat på URL
-if 'radio_calc_selection' not in st.session_state:
+if 'radio_calc_selection' in st.session_state:
+    # Hitta nyckeln för det som för närvarande är valt i Session State
+    current_key_in_state = CALC_OPTIONS.get(st.session_state.radio_calc_selection)
+    
+    # Återställ Session State för radioknappen om URL-nyckeln skiljer sig från Session State-nyckeln.
+    # Detta tvingar fram URL-valet vid sidladdning.
+    if current_key_in_state != active_tab:
+        st.session_state.radio_calc_selection = radio_default_name
+else:
+    # Sätt Session State baserat på URL om den inte är satt
     st.session_state['radio_calc_selection'] = radio_default_name
-# Annars låt den behålla sitt värde från tidigare användarinteraktion
 
 
 # --- HJÄLP OCH INSTRUKTIONER (WIKI) ---
@@ -150,8 +156,7 @@ if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_bespari
 with st.sidebar:
     st.header("🔎 Välj Kalkyl")
     
-    # st.radio använder nu Session State ('radio_calc_selection') som källa för valt värde.
-    # Värdet sattes ovan, baserat på URL-parametern, vid första körningen.
+    # st.radio använder Session State som källa, vilket nu är synkroniserat med URL:en
     selected_calc_name = st.radio(
         "Välj det område du vill analysera:", 
         options=list(CALC_OPTIONS.keys()), 
@@ -159,7 +164,7 @@ with st.sidebar:
         on_change=update_tab_key
     )
     
-    # active_tab används nu för att styra innehållet, och dess initialvärde kommer direkt från URL-läsningen.
+    # active_tab används för att styra innehållet, vilket sattes utifrån URL:en
     
     st.markdown("---")
     st.header("⚙️ Gemensamma Driftskostnader")
@@ -181,7 +186,6 @@ with st.sidebar:
 
 
 # --- 2. INNEHÅLLSBLOCK STYRS AV DEN URL-HÄMTADE active_tab ---
-# Notera att vi använder variabeln 'active_tab' som SATTES FRÅN URL:EN LÄNGST UPP i scriptet.
 
 # --- FLIK 1: TEMPERATUR & ENERGI ---
 if active_tab == "temp":
