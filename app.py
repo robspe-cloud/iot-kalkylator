@@ -13,16 +13,14 @@ KEY_MAP_REVERSE = {v: k for k, v in CALC_OPTIONS.items()}
 
 # --- CALLBACK FUNKTION ---
 def update_tab_key():
-    """Uppdaterar Session State och URL när användaren klickar på en ny radio-knapp."""
+    """Uppdaterar URL-parametern när användaren klickar på en ny radio-knapp."""
+    # Denna funktion körs efter st.radio har uppdaterat 'radio_calc_selection'
     selected_display_name = st.session_state.radio_calc_selection
     new_calc_key = CALC_OPTIONS[selected_display_name]
     
-    # 1. Uppdatera Session State (den sanna källan till aktiv flik)
-    st.session_state.active_tab_key = new_calc_key
-    
-    # 2. Uppdatera URL-parametern (för att möjliggöra delning via URL)
+    # Uppdatera URL-parametern (vilket triggar en ny render och uppdaterar 'active_tab' nedan)
     st.query_params['kalkyl'] = new_calc_key
-
+    
 # --- FUNKTIONER FÖR BERÄKNINGAR OCH VISUALISERING ---
 
 def create_cashflow_chart(initial_cost, net_annual_flow, title):
@@ -64,12 +62,17 @@ st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
 st.title("💰 IoT ROI Kalkylator")
 st.markdown("---")
 
-# --- INITIALISERING AV SESSION STATE FRÅN URL ---
+# --- BESTÄM AKTIV FLIK (ROBUST METOD) ---
 query_params = st.query_params
 url_calc_key = query_params.get("kalkyl", ["temp"])[0].lower() # Hämta 'imd', 'skada', eller default 'temp'
 
-if 'active_tab_key' not in st.session_state:
-    st.session_state.active_tab_key = url_calc_key
+if 'radio_calc_selection' in st.session_state:
+    # Om användaren interagerat, använd radio-knappens val
+    selected_display_name = st.session_state.radio_calc_selection
+    active_tab = CALC_OPTIONS.get(selected_display_name, "temp")
+else:
+    # Första laddningen: Använd URL-parametern som absolut källa
+    active_tab = url_calc_key
 
 # --- HJÄLP OCH INSTRUKTIONER (WIKI) ---
 with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn"):
@@ -107,7 +110,7 @@ with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn")
     """)
 st.markdown("---")
 
-# --- INITIALISERING AV ÖVRIG SESSION STATE (ALLA INPUTS MÅSTE DEFINIERAS HÄR) ---
+# --- INITIALISERING AV ÖVRIG SESSION STATE (Input-värden) ---
 
 # Gemensamma Indata
 if 'antal_lgh_main' not in st.session_state: st.session_state.antal_lgh_main = 1000
@@ -143,25 +146,26 @@ if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_bespari
 
 # --- NAVIGATION OCH SIDEBAR FÖR GEMENSAMMA INDATA ---
 
-# Bestäm defaultnamnet för radio-knappen baserat på Session State (som initialiserades från URL:en)
-radio_default_name = KEY_MAP_REVERSE.get(st.session_state.active_tab_key, "🌡️ Temperatur & Energi")
+# Bestäm vilken radio-knapp som ska vara markerad baserat på 'active_tab'
+radio_default_name = KEY_MAP_REVERSE.get(active_tab, "🌡️ Temperatur & Energi")
 radio_default_index = list(CALC_OPTIONS.keys()).index(radio_default_name)
 
 with st.sidebar:
     st.header("🔎 Välj Kalkyl")
     
-    # Använd Session State och on_change för robust navigering
+    # Använd 'index' för att ställa in startfliken och 'on_change' för att uppdatera URL/state
     st.radio(
         "Välj det område du vill analysera:", 
         options=list(CALC_OPTIONS.keys()), 
         index=radio_default_index, 
-        key='radio_calc_selection', # Nyckel för radio-knappen
-        on_change=update_tab_key # Call-back som uppdaterar Session State och URL
+        key='radio_calc_selection', # Nyckel som lagrar det markerade namnet (t.ex. "💧 IMD: Vattenförbrukning")
+        on_change=update_tab_key # Call-back som uppdaterar URL:en
     )
     
     st.markdown("---")
     st.header("⚙️ Gemensamma Driftskostnader")
     
+    # ... Övriga sidebar inputs (ingen förändring) ...
     antal_lgh = st.number_input("Antal lägenheter i fastigheten", value=st.session_state.antal_lgh_main, step=10, key='antal_lgh_main')
     
     st.subheader("Årliga Kostnader per Sensor/Lgh")
@@ -177,9 +181,7 @@ with st.sidebar:
     total_drift_ar = (antal_lgh * total_drift_ar_per_sensor) + applikation_kostnad
 
 
-# Den aktiva fliken styrs nu av Session State, som initialiserades från URL:en
-active_tab = st.session_state.active_tab_key
-
+# Den aktiva fliken styrs nu av den beräknade 'active_tab' variabeln
 
 # --- FLIK 1: TEMPERATUR & ENERGI ---
 if active_tab == "temp":
