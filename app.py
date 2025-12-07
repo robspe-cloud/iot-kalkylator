@@ -44,7 +44,7 @@ st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
 st.title("💰 ROI Kalkylator: Fastighets-IoT")
 st.markdown("---")
 
-# --- INITIALISERING AV SESSION STATE (ALLA INPUTS MÅSTE DEFINIERAS HÄR) ---
+# --- INITIALISERING AV SESSION STATE (ALLA INPUTS) ---
 # Detta garanterar att alla nycklar existerar INNAN de läses av spara/ladda-funktionen.
 
 # Gemensamma Indata
@@ -79,28 +79,23 @@ if 'besparing_skada_pct' not in st.session_state: st.session_state.besparing_ska
 if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_besparing_skada_lgh = 171
 
 
-# --- NAVIGATION OCH SIDEBAR FÖR GEMENSAMMA INDATA ---
+# --- URL-PARAMETER STYRNING FÖR AKTIV FLIK ---
+query_params = st.query_params
+active_tab_name = query_params.get("tab", ["temp"])[0].lower() 
+tab_names = ["temp", "imd", "skada"]
+try:
+    default_tab_index = tab_names.index(active_tab_name)
+except ValueError:
+    default_tab_index = 0
 
-tab_options = {
-    "🌡️ Temperatur & Energi": "temp", 
-    "💧 IMD: Vattenförbrukning": "imd", 
-    "🚨 Vattenskadeskydd": "skada"
-}
+# --- FLIK DEFINITION (st.tabs) ---
+tab1, tab2, tab3 = st.tabs(["🌡️ Temperatur & Energi", "💧 IMD: Vattenförbrukning", "🚨 Vattenskadeskydd"], default_index=default_tab_index)
 
+
+# --- SIDEBAR FÖR GEMENSAMMA INDATA ---
 with st.sidebar:
-    st.header("🔎 Välj Kalkyl")
-    # Använder st.radio istället för st.tabs för maximal kompatibilitet
-    selected_tab_key = st.radio(
-        "Välj det område du vill analysera:", 
-        options=list(tab_options.keys()), 
-        index=0
-    )
-    selected_tab = tab_options[selected_tab_key]
-    
-    st.markdown("---")
     st.header("⚙️ Gemensamma Driftskostnader")
     
-    # OBS: Värdena hämtas direkt från session state (som nu är initialiserade i toppen)
     antal_lgh = st.number_input("Antal lägenheter i fastigheten", value=st.session_state.antal_lgh_main, step=10, key='antal_lgh_main')
     
     st.subheader("Årliga Kostnader per Sensor/Lgh")
@@ -117,7 +112,7 @@ with st.sidebar:
 
 
 # --- FLIK 1: TEMPERATUR & ENERGI ---
-if selected_tab == "temp":
+with tab1:
     st.header("Temperatur- och Energikalkyl")
     st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
     st.markdown("---")
@@ -176,7 +171,6 @@ if selected_tab == "temp":
     
     with col1:
         st.subheader("Initial Investering")
-        # OBS: Ingen initialisering här, den sker i toppen
         pris_sensor_temp = st.number_input("Pris per Temp-sensor (kr)", value=st.session_state.pris_sensor_temp, key='pris_sensor_temp')
         pris_install_temp = st.number_input("Installation/Konfig. per sensor (kr)", value=st.session_state.pris_install_temp, key='pris_install_temp') 
         startkostnad_projekt_temp = st.number_input("Projektstartkostnad (kr)", value=st.session_state.startkostnad_temp, key='startkostnad_temp')
@@ -202,7 +196,7 @@ if selected_tab == "temp":
     st.plotly_chart(fig_temp, use_container_width=True)
 
 # --- FLIK 2: IMD: VATTENFÖRBRUKNING ---
-elif selected_tab == "imd":
+with tab2:
     st.header("IMD: Vattenförbrukningskalkyl")
     st.markdown("Fokus: Minska vatten- och varmvattenförbrukning genom individuell mätning och debitering (IMD), t.ex. Quandify.")
     st.markdown("---")
@@ -211,7 +205,6 @@ elif selected_tab == "imd":
     
     with col3:
         st.subheader("Initial Investering (IMD-mätare)")
-        # OBS: Ingen initialisering här, den sker i toppen
         pris_sensor_imd = st.number_input("Pris per Vattenmätare/Sensor (kr)", value=st.session_state.pris_sensor_imd, key='pris_sensor_imd')
         pris_install_imd = st.number_input("Installation/Konfig per mätare (kr)", value=st.session_state.pris_install_imd, key='pris_install_imd') 
         total_initial_imd = antal_lgh * (pris_sensor_imd + pris_install_imd) + (5 * pris_sensor_imd) # Lägger till 5 reservsensorer
@@ -230,7 +223,7 @@ elif selected_tab == "imd":
     st.plotly_chart(fig_imd, use_container_width=True)
 
 # --- FLIK 3: VATTENSKADESKYDD ---
-elif selected_tab == "skada":
+with tab3:
     st.header("Vattenskadeskyddskalkyl")
     st.markdown("Fokus: Undvika kostsamma vattenskador genom tidig upptäckt av läckagesensorer, t.ex. Elsys.")
     st.markdown("---")
@@ -239,7 +232,6 @@ elif selected_tab == "skada":
 
     with col5:
         st.subheader("Initial Investering (Läckagesensor)")
-        # OBS: Ingen initialisering här, den sker i toppen
         pris_sensor_skada = st.number_input("Pris per Läckagesensor (kr)", value=st.session_state.pris_sensor_skada, key='pris_sensor_skada')
         pris_install_skada = st.number_input("Installation/Konfig per sensor (kr)", value=st.session_state.pris_install_skada, key='pris_install_skada') 
         total_initial_skada = antal_lgh * (pris_sensor_skada + pris_install_skada)
