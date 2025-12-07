@@ -261,3 +261,6 @@ with tab3:
     with st.expander("Beräkningsdetaljer"):
         st.write(f"Besparing från undvikta skadekostnader ({besparing_procent_skador:.1f}% av {tot_skadekostnad_utan_iot:,.0f} kr): **{besparing_skador_kr:,.0f} kr**")
         st.write(f"Övrig underhållsbesparing (från Excel): **{antal_lgh * uh_besparing_skada_lgh:,.0f} kr**")
+
+
+ 
