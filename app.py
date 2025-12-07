@@ -155,7 +155,7 @@ with st.sidebar:
 # --- VÄLKOMSTSKÄRM (Nytt startläge) ---
 if active_tab == "":
     st.info("👋 Välkommen! Vänligen välj en kalkyl i sidofältet till vänster (t.ex. '🌡️ Temperatur & Energi') för att börja beräkna ROI.")
-    st.balloons() # Liten visuell touch på startsidan
+    st.snow() # Liten visuell touch på startsidan
 
 # --- FLIK 1: TEMPERATUR & ENERGI ---
 elif active_tab == "temp":
@@ -373,3 +373,4 @@ elif active_tab == "skada":
     with st.expander("Beräkningsdetaljer"):
         st.write(f"Besparing från undvikna skadekostnader ({besparing_procent_skador:.1f}% av {tot_skadekostnad_utan_iot:,.0f} kr): **{besparing_skador_kr:,.0f} kr**")
         st.write(f"Övrig underhållsbesparing (från Excel): **{antal_lgh * uh_besparing_skada_lgh:,.0f} kr**")
+
