@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import json
+from streamlit.components.v1 import html
 
 # --- KONSTANTER OCH MAPPNING ---
 CALC_OPTIONS = {
@@ -12,12 +13,47 @@ CALC_OPTIONS = {
 KEY_MAP_REVERSE = {v: k for k, v in CALC_OPTIONS.items()} 
 CALC_KEY_LIST = list(CALC_OPTIONS.values()) # ['temp', 'imd', 'skada']
 
-# --- CALLBACK FUNKTION (FÖR KNAPPKLICK) ---
-def set_tab_key(new_calc_key):
-    """Uppdaterar URL-parametern och tvingar fram en omladdning."""
-    st.query_params['kalkyl'] = new_calc_key
-    st.experimental_rerun()
+# --- KRITISK FUNKTION FÖR NAVIGATION (ERSÄTTER st.radio & st.button) ---
+# Denna funktion genererar JavaScript för att tvinga en omdirigering av webbläsaren.
+def generate_nav_js_button(display_name, calc_key, is_active):
+    """
+    Genererar en HTML-knapp som omdirigerar webbläsaren till en ny URL med den nya kalkyl-parametern, 
+    vilket tvingar fram en fullständig omladdning och rensning av cachen.
+    """
+    # Hämta bas-URL (t.ex. https://app-name.streamlit.app/)
+    # Streamlit lägger till '?kalkyl=X' automatiskt vid första omladdningen.
+    # Vi behöver bara veta bas-URL:en. Vi använder window.location.origin + window.location.pathname.
+    # För att hantera Streamlit Clouds iframes använder vi window.parent.location.
     
+    
+    # Skapa URL med den nya parametern
+    new_url = f"window.parent.location.origin + window.parent.location.pathname + '?kalkyl={calc_key}'"
+    
+    # CSS för knappen (härmar Streamlit-knappar, primary eller secondary)
+    primary_css = "background-color: #f69c55; color: white; border: none;"
+    secondary_css = "background-color: #f0f2f6; color: #4b4b4b; border: 1px solid #c9c9c9;"
+    css = primary_css if is_active else secondary_css
+    
+    html_code = f"""
+    <button 
+        onclick="window.parent.location.href = {new_url};"
+        style="{css} 
+               padding: 8px 16px; 
+               margin: 5px 0; 
+               border-radius: 0.5rem; 
+               width: 100%; 
+               cursor: pointer;
+               font-weight: 400;
+               text-align: left;
+               font-size: 14px;
+               transition: background-color 0.2s, border-color 0.2s;"
+    >
+        {display_name}
+    </button>
+    """
+    html(html_code, height=45)
+
+
 # --- FUNKTIONER FÖR BERÄKNINGAR OCH VISUALISERING (Oförändrade) ---
 
 def create_cashflow_chart(initial_cost, net_annual_flow, title):
@@ -60,11 +96,10 @@ st.markdown("---")
 
 # --- 1. HÄMTA AKTIV FLIK FRÅN URL ---
 query_params = st.query_params
-url_calc_key = query_params.get("kalkyl", ["temp"])[0].lower() # Hämta 'imd', 'skada', eller default 'temp'
+url_calc_key = query_params.get("kalkyl", ["temp"])[0].lower() 
 
 # Definiera active_tab utifrån URL-nyckeln
 active_tab = url_calc_key if url_calc_key in CALC_OPTIONS.values() else "temp"
-
 
 # --- HJÄLP OCH INSTRUKTIONER (WIKI) ---
 with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn"):
@@ -138,20 +173,11 @@ if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_bespari
 with st.sidebar:
     st.header("🔎 Välj Kalkyl")
     
-    # ERSATT st.radio med enkla knappar
+    # ERSÄTTER st.radio/st.button med JS-drivna knappar
     for display_name, calc_key in CALC_OPTIONS.items():
         is_active = (calc_key == active_tab)
-        
-        # Använd `type="primary"` för den aktiva knappen
-        btn_type = "primary" if is_active else "secondary"
-        
-        st.button(
-            display_name, 
-            key=f'btn_{calc_key}', 
-            on_click=set_tab_key, 
-            args=(calc_key,),
-            type=btn_type
-        )
+        generate_nav_js_button(display_name, calc_key, is_active)
+
 
     st.markdown("---")
     st.header("⚙️ Gemensamma Driftskostnader")
