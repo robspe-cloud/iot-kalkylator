@@ -28,9 +28,14 @@ def create_cashflow_chart(initial_cost, net_annual_flow, title):
 def display_kpis(initial, netto, payback):
     """Visar de tre nyckeltalen."""
     col1_kpi, col2_kpi, col3_kpi = st.columns(3)
+    # Kontrollera att variablerna är numeriska och positiva innan formatering
+    initial = initial if initial is not None and initial >= 0 else 0
+    netto = netto if netto is not None else 0
+    payback = payback if payback is not None and payback >= 0 else 0
+
     col1_kpi.metric("Total Investering", f"{initial:,.0f} kr".replace(",", " "))
     col2_kpi.metric("Årlig Nettobesparing", f"{netto:,.0f} kr".replace(",", " "), delta_color="normal")
-    col3_kpi.metric("Payback-tid", f"{payback:.1f} år")
+    col3_kpi.metric("Payback-tid", f"{payback:.1f} år" if payback > 0 else "N/A")
 
 # --- HUVUDAPPLIKATION ---
 
@@ -39,7 +44,42 @@ st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
 st.title("💰 ROI Kalkylator: Fastighets-IoT")
 st.markdown("---")
 
-# --- NY NAVIGATION OCH SIDEBAR FÖR GEMENSAMMA INDATA ---
+# --- INITIALISERING AV SESSION STATE (ALLA INPUTS MÅSTE DEFINIERAS HÄR) ---
+# Detta garanterar att alla nycklar existerar INNAN de läses av spara/ladda-funktionen.
+
+# Gemensamma Indata
+if 'antal_lgh_main' not in st.session_state: st.session_state.antal_lgh_main = 1000
+if 'uh_per_sensor' not in st.session_state: st.session_state.uh_per_sensor = 100
+if 'lora_cost' not in st.session_state: st.session_state.lora_cost = 75
+if 'web_cost' not in st.session_state: st.session_state.web_cost = 50
+if 'app_cost' not in st.session_state: st.session_state.app_cost = 5000
+
+# Flik 1: Temperatur & Energi
+if 'pris_sensor_temp' not in st.session_state: st.session_state.pris_sensor_temp = 688
+if 'pris_install_temp' not in st.session_state: st.session_state.pris_install_temp = 409
+if 'startkostnad_temp' not in st.session_state: st.session_state.startkostnad_temp = 27500
+if 'kvm_snitt' not in st.session_state: st.session_state.kvm_snitt = 67
+if 'kwh_kvm' not in st.session_state: st.session_state.kwh_kvm = 130.6
+if 'pris_kwh' not in st.session_state: st.session_state.pris_kwh = 1.02
+if 'besparing_temp' not in st.session_state: st.session_state.besparing_temp = 6.0
+if 'uh_besparing_temp' not in st.session_state: st.session_state.uh_besparing_temp = 200
+
+# Flik 2: IMD Vatten
+if 'pris_sensor_imd' not in st.session_state: st.session_state.pris_sensor_imd = 1875
+if 'pris_install_imd' not in st.session_state: st.session_state.pris_install_imd = 459
+if 'besparing_lgh_vatten' not in st.session_state: st.session_state.besparing_lgh_vatten = 500
+if 'besparing_lgh_uh_imd' not in st.session_state: st.session_state.besparing_lgh_uh_imd = 200
+
+# Flik 3: Vattenskadeskydd
+if 'pris_sensor_skada' not in st.session_state: st.session_state.pris_sensor_skada = 714.42
+if 'pris_install_skada' not in st.session_state: st.session_state.pris_install_skada = 523
+if 'kostnad_skada' not in st.session_state: st.session_state.kostnad_skada = 70000
+if 'frekvens_skada' not in st.session_state: st.session_state.frekvens_skada = 50
+if 'besparing_skada_pct' not in st.session_state: st.session_state.besparing_skada_pct = 60.0
+if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_besparing_skada_lgh = 171
+
+
+# --- NAVIGATION OCH SIDEBAR FÖR GEMENSAMMA INDATA ---
 
 tab_options = {
     "🌡️ Temperatur & Energi": "temp", 
@@ -53,29 +93,22 @@ with st.sidebar:
     selected_tab_key = st.radio(
         "Välj det område du vill analysera:", 
         options=list(tab_options.keys()), 
-        index=0,
+        index=0
     )
     selected_tab = tab_options[selected_tab_key]
     
     st.markdown("---")
     st.header("⚙️ Gemensamma Driftskostnader")
     
-    # Initialisera Session State för alla inputs om de saknas
-    if 'antal_lgh_main' not in st.session_state: st.session_state.antal_lgh_main = 1000
+    # OBS: Värdena hämtas direkt från session state (som nu är initialiserade i toppen)
     antal_lgh = st.number_input("Antal lägenheter i fastigheten", value=st.session_state.antal_lgh_main, step=10, key='antal_lgh_main')
-
+    
     st.subheader("Årliga Kostnader per Sensor/Lgh")
-    if 'uh_per_sensor' not in st.session_state: st.session_state.uh_per_sensor = 100
     underhall_per_sensor = st.number_input("Underhåll/batteri per sensor/år (kr)", value=st.session_state.uh_per_sensor, key='uh_per_sensor')
-
-    if 'lora_cost' not in st.session_state: st.session_state.lora_cost = 75
     lora_kostnad = st.number_input("LoRaWAN anslutning per sensor/år (kr)", value=st.session_state.lora_cost, key='lora_cost')
-
-    if 'web_cost' not in st.session_state: st.session_state.web_cost = 50
     webiot_kostnad = st.number_input("Plattformskostnad per sensor/år (kr)", value=st.session_state.web_cost, key='web_cost')
     
     st.subheader("Fast Årlig Avgfit")
-    if 'app_cost' not in st.session_state: st.session_state.app_cost = 5000
     applikation_kostnad = st.number_input("Applikationskostnad (fast avgift/år)", value=st.session_state.app_cost, key='app_cost')
     
     # Total årlig drift (Används i alla kalkyler)
@@ -84,7 +117,6 @@ with st.sidebar:
 
 
 # --- FLIK 1: TEMPERATUR & ENERGI ---
-# Körs endast om "Temperatur & Energi" är vald i sidebar.
 if selected_tab == "temp":
     st.header("Temperatur- och Energikalkyl")
     st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
@@ -100,7 +132,7 @@ if selected_tab == "temp":
         if uploaded_file is not None:
             try:
                 scenario_data = json.load(uploaded_file)
-                # Uppdatera Streamlit Session State för ALLA inputs. Måste matcha nycklarna i koden.
+                # Uppdatera Streamlit Session State för ALLA inputs.
                 for key, value in scenario_data.items():
                     if key in st.session_state:
                         st.session_state[key] = value
@@ -110,7 +142,7 @@ if selected_tab == "temp":
 
     # 2. Spara Scenario
     with col_save:
-        # Samla in alla relevanta input-värden i en diktamen
+        # Samla in alla relevanta input-värden i en diktamen (Session state läses nu utan fel)
         scenario_data_to_save = {
             'antal_lgh_main': st.session_state.antal_lgh_main,
             'uh_per_sensor': st.session_state.uh_per_sensor,
@@ -144,31 +176,18 @@ if selected_tab == "temp":
     
     with col1:
         st.subheader("Initial Investering")
-        if 'pris_sensor_temp' not in st.session_state: st.session_state.pris_sensor_temp = 688
+        # OBS: Ingen initialisering här, den sker i toppen
         pris_sensor_temp = st.number_input("Pris per Temp-sensor (kr)", value=st.session_state.pris_sensor_temp, key='pris_sensor_temp')
-        
-        if 'pris_install_temp' not in st.session_state: st.session_state.pris_install_temp = 409
         pris_install_temp = st.number_input("Installation/Konfig. per sensor (kr)", value=st.session_state.pris_install_temp, key='pris_install_temp') 
-        
-        if 'startkostnad_temp' not in st.session_state: st.session_state.startkostnad_temp = 27500
         startkostnad_projekt_temp = st.number_input("Projektstartkostnad (kr)", value=st.session_state.startkostnad_temp, key='startkostnad_temp')
         total_initial_temp = antal_lgh * (pris_sensor_temp * 1.01 + pris_install_temp) + startkostnad_projekt_temp # 1% reserv
 
     with col2:
         st.subheader("Besparingsparametrar")
-        if 'kvm_snitt' not in st.session_state: st.session_state.kvm_snitt = 67
         kvm_snitt = st.number_input("Snittyta per lgh (kvm)", value=st.session_state.kvm_snitt, key='kvm_snitt')
-        
-        if 'kwh_kvm' not in st.session_state: st.session_state.kwh_kvm = 130.6
         energiforbrukning_kvm = st.number_input("Förbrukning (kWh/m²/år)", value=st.session_state.kwh_kvm, key='kwh_kvm')
-        
-        if 'pris_kwh' not in st.session_state: st.session_state.pris_kwh = 1.02
         energipris = st.number_input("Energipris (kr/kWh)", value=st.session_state.pris_kwh, key='pris_kwh')
-        
-        if 'besparing_temp' not in st.session_state: st.session_state.besparing_temp = 6.0
         besparing_procent = st.slider("Förväntad energibesparing (%)", 0.0, 15.0, value=st.session_state.besparing_temp, step=0.1, key='besparing_temp')
-        
-        if 'uh_besparing_temp' not in st.session_state: st.session_state.uh_besparing_temp = 200
         underhall_besparing_lgh = st.number_input("Minskat underhåll/lgh (kr/år)", value=st.session_state.uh_besparing_temp, key='uh_besparing_temp')
         
         total_kwh_fastighet = antal_lgh * kvm_snitt * energiforbrukning_kvm
@@ -183,7 +202,6 @@ if selected_tab == "temp":
     st.plotly_chart(fig_temp, use_container_width=True)
 
 # --- FLIK 2: IMD: VATTENFÖRBRUKNING ---
-# Körs endast om "IMD: Vattenförbrukning" är vald i sidebar.
 elif selected_tab == "imd":
     st.header("IMD: Vattenförbrukningskalkyl")
     st.markdown("Fokus: Minska vatten- och varmvattenförbrukning genom individuell mätning och debitering (IMD), t.ex. Quandify.")
@@ -193,20 +211,14 @@ elif selected_tab == "imd":
     
     with col3:
         st.subheader("Initial Investering (IMD-mätare)")
-        if 'pris_sensor_imd' not in st.session_state: st.session_state.pris_sensor_imd = 1875
+        # OBS: Ingen initialisering här, den sker i toppen
         pris_sensor_imd = st.number_input("Pris per Vattenmätare/Sensor (kr)", value=st.session_state.pris_sensor_imd, key='pris_sensor_imd')
-        
-        if 'pris_install_imd' not in st.session_state: st.session_state.pris_install_imd = 459
         pris_install_imd = st.number_input("Installation/Konfig per mätare (kr)", value=st.session_state.pris_install_imd, key='pris_install_imd') 
-        
         total_initial_imd = antal_lgh * (pris_sensor_imd + pris_install_imd) + (5 * pris_sensor_imd) # Lägger till 5 reservsensorer
         
     with col4:
         st.subheader("Besparingsparametrar (Förbrukning)")
-        if 'besparing_lgh_vatten' not in st.session_state: st.session_state.besparing_lgh_vatten = 500
         besparing_per_lgh_vatten = st.number_input("Vatten/Varmvatten-besparing per lgh/år (kr)", value=st.session_state.besparing_lgh_vatten, key='besparing_lgh_vatten')
-        
-        if 'besparing_lgh_uh_imd' not in st.session_state: st.session_state.besparing_lgh_uh_imd = 200
         besparing_per_lgh_underhall = st.number_input("Minskat underhåll/lgh (kr/år)", value=st.session_state.besparing_lgh_uh_imd, key='besparing_lgh_uh_imd')
         
         total_besparing_imd = antal_lgh * (besparing_per_lgh_vatten + besparing_per_lgh_underhall)
@@ -218,7 +230,6 @@ elif selected_tab == "imd":
     st.plotly_chart(fig_imd, use_container_width=True)
 
 # --- FLIK 3: VATTENSKADESKYDD ---
-# Körs endast om "Vattenskadeskydd" är vald i sidebar.
 elif selected_tab == "skada":
     st.header("Vattenskadeskyddskalkyl")
     st.markdown("Fokus: Undvika kostsamma vattenskador genom tidig upptäckt av läckagesensorer, t.ex. Elsys.")
@@ -228,30 +239,21 @@ elif selected_tab == "skada":
 
     with col5:
         st.subheader("Initial Investering (Läckagesensor)")
-        if 'pris_sensor_skada' not in st.session_state: st.session_state.pris_sensor_skada = 714.42
+        # OBS: Ingen initialisering här, den sker i toppen
         pris_sensor_skada = st.number_input("Pris per Läckagesensor (kr)", value=st.session_state.pris_sensor_skada, key='pris_sensor_skada')
-        
-        if 'pris_install_skada' not in st.session_state: st.session_state.pris_install_skada = 523
         pris_install_skada = st.number_input("Installation/Konfig per sensor (kr)", value=st.session_state.pris_install_skada, key='pris_install_skada') 
-        
         total_initial_skada = antal_lgh * (pris_sensor_skada + pris_install_skada)
         
     with col6:
         st.subheader("Besparingsparametrar (Skadereduktion)")
-        if 'kostnad_skada' not in st.session_state: st.session_state.kostnad_skada = 70000
         kostnad_vattenskada = st.number_input("Snittkostnad per vattenskada (kr)", value=st.session_state.kostnad_skada, key='kostnad_skada')
-        
-        if 'frekvens_skada' not in st.session_state: st.session_state.frekvens_skada = 50
         frekvens_vattenskada = st.number_input("Antal vattenskador per 1000 lgh/år (Utan IoT)", value=st.session_state.frekvens_skada, key='frekvens_skada')
-        
-        if 'besparing_skada_pct' not in st.session_state: st.session_state.besparing_skada_pct = 60.0
         besparing_procent_skador = st.slider("Förväntad Minskning av Skadekostnad (%)", 0.0, 90.0, value=st.session_state.besparing_skada_pct, step=5.0, key='besparing_skada_pct')
         
         # Beräkning
         tot_skadekostnad_utan_iot = (antal_lgh / 1000) * (frekvens_vattenskada * kostnad_vattenskada)
         besparing_skador_kr = tot_skadekostnad_utan_iot * (besparing_procent_skador / 100)
         
-        if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_besparing_skada_lgh = 171
         uh_besparing_skada_lgh = st.number_input("Övrig underhållsbesparing per lgh/år (kr)", value=st.session_state.uh_besparing_skada_lgh, key='uh_besparing_skada_lgh')
         
         total_besparing_skada = besparing_skador_kr + (antal_lgh * uh_besparing_skada_lgh)
