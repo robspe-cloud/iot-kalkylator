@@ -13,16 +13,12 @@ KEY_MAP_REVERSE = {v: k for k, v in CALC_OPTIONS.items()}
 CALC_KEY_LIST = list(CALC_OPTIONS.values()) # ['temp', 'imd', 'skada']
 
 # --- CALLBACK FUNKTION (FÖR KNAPPKLICK) ---
-# Denna är nu BETYDLIGT viktigare eftersom den är det enda sättet att uppdatera URL:en EFTER initial inläsning.
-def update_tab_key():
-    """Uppdaterar URL-parametern när användaren klickar på en ny radio-knapp."""
-    selected_display_name = st.session_state.radio_calc_selection
-    new_calc_key = CALC_OPTIONS[selected_display_name]
-    
-    # Uppdatera URL-parametern
+def set_tab_key(new_calc_key):
+    """Uppdaterar URL-parametern och tvingar fram en omladdning."""
     st.query_params['kalkyl'] = new_calc_key
+    st.experimental_rerun()
     
-# --- FUNKTIONER FÖR BERÄKNINGAR OCH VISUALISERING ---
+# --- FUNKTIONER FÖR BERÄKNINGAR OCH VISUALISERING (Oförändrade) ---
 
 def create_cashflow_chart(initial_cost, net_annual_flow, title):
     """Genererar den ackumulerade kassaflödesgrafen."""
@@ -62,18 +58,13 @@ st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
 st.title("💰 IoT ROI Kalkylator")
 st.markdown("---")
 
-# --- 1. HÄMTA AKTIV FLIK FRÅN URL OCH BESTÄM INDEX ---
+# --- 1. HÄMTA AKTIV FLIK FRÅN URL ---
 query_params = st.query_params
 url_calc_key = query_params.get("kalkyl", ["temp"])[0].lower() # Hämta 'imd', 'skada', eller default 'temp'
 
 # Definiera active_tab utifrån URL-nyckeln
 active_tab = url_calc_key if url_calc_key in CALC_OPTIONS.values() else "temp"
 
-# Beräkna vilket index i listan (0, 1 eller 2) som ska vara förvalt
-try:
-    default_index = CALC_KEY_LIST.index(active_tab)
-except ValueError:
-    default_index = 0 # Default till Temperatur
 
 # --- HJÄLP OCH INSTRUKTIONER (WIKI) ---
 with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn"):
@@ -147,19 +138,21 @@ if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_bespari
 with st.sidebar:
     st.header("🔎 Välj Kalkyl")
     
-    # st.radio tvingas nu använda index baserat på URL-parametern
-    selected_calc_name = st.radio(
-        "Välj det område du vill analysera:", 
-        options=list(CALC_OPTIONS.keys()), 
-        index=default_index, # <-- DEN KRITISKA FÖRÄNDRINGEN
-        key='radio_calc_selection', 
-        on_change=update_tab_key
-    )
-    
-    # Eftersom active_tab styrs av URL:en och inte Session State, måste vi se till att 
-    # active_tab får rätt värde från radio-knappens val efter inläsning.
-    active_tab = CALC_OPTIONS[selected_calc_name]
-    
+    # ERSATT st.radio med enkla knappar
+    for display_name, calc_key in CALC_OPTIONS.items():
+        is_active = (calc_key == active_tab)
+        
+        # Använd `type="primary"` för den aktiva knappen
+        btn_type = "primary" if is_active else "secondary"
+        
+        st.button(
+            display_name, 
+            key=f'btn_{calc_key}', 
+            on_click=set_tab_key, 
+            args=(calc_key,),
+            type=btn_type
+        )
+
     st.markdown("---")
     st.header("⚙️ Gemensamma Driftskostnader")
     
