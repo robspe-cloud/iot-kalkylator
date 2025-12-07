@@ -39,24 +39,27 @@ st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
 st.title("💰 ROI Kalkylator: Fastighets-IoT")
 st.markdown("---")
 
+# --- NY NAVIGATION OCH SIDEBAR FÖR GEMENSAMMA INDATA ---
 
-# --- URL-PARAMETER STYRNING FÖR AKTIV FLIK ---
-# Vi använder URL-parametern för att styra vilken flik som är aktiv. Default är 'temp'.
-query_params = st.query_params
-active_tab_name = query_params.get("tab", ["temp"])[0].lower() 
-tab_names = ["temp", "imd", "skada"]
-try:
-    default_tab_index = tab_names.index(active_tab_name)
-except ValueError:
-    default_tab_index = 0 
+tab_options = {
+    "🌡️ Temperatur & Energi": "temp", 
+    "💧 IMD: Vattenförbrukning": "imd", 
+    "🚨 Vattenskadeskydd": "skada"
+}
 
-# FLIKAR
-tab1, tab2, tab3 = st.tabs(["🌡️ Temperatur & Energi", "💧 IMD: Vattenförbrukning", "🚨 Vattenskadeskydd"], default_index=default_tab_index)
-
-
-# --- SIDEBAR FÖR GEMENSAMMA INDATA (LORA/PLATTFORM) ---
 with st.sidebar:
+    st.header("🔎 Välj Kalkyl")
+    # Använder st.radio istället för st.tabs för maximal kompatibilitet
+    selected_tab_key = st.radio(
+        "Välj det område du vill analysera:", 
+        options=list(tab_options.keys()), 
+        index=0,
+    )
+    selected_tab = tab_options[selected_tab_key]
+    
+    st.markdown("---")
     st.header("⚙️ Gemensamma Driftskostnader")
+    
     # Initialisera Session State för alla inputs om de saknas
     if 'antal_lgh_main' not in st.session_state: st.session_state.antal_lgh_main = 1000
     antal_lgh = st.number_input("Antal lägenheter i fastigheten", value=st.session_state.antal_lgh_main, step=10, key='antal_lgh_main')
@@ -81,7 +84,8 @@ with st.sidebar:
 
 
 # --- FLIK 1: TEMPERATUR & ENERGI ---
-with tab1:
+# Körs endast om "Temperatur & Energi" är vald i sidebar.
+if selected_tab == "temp":
     st.header("Temperatur- och Energikalkyl")
     st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
     st.markdown("---")
@@ -155,9 +159,7 @@ with tab1:
         if 'kvm_snitt' not in st.session_state: st.session_state.kvm_snitt = 67
         kvm_snitt = st.number_input("Snittyta per lgh (kvm)", value=st.session_state.kvm_snitt, key='kvm_snitt')
         
-        # DENNA RAD VAR TRUNKERAD TIDIGARE! (Ska ha = 130.6)
         if 'kwh_kvm' not in st.session_state: st.session_state.kwh_kvm = 130.6
-        
         energiforbrukning_kvm = st.number_input("Förbrukning (kWh/m²/år)", value=st.session_state.kwh_kvm, key='kwh_kvm')
         
         if 'pris_kwh' not in st.session_state: st.session_state.pris_kwh = 1.02
@@ -181,7 +183,8 @@ with tab1:
     st.plotly_chart(fig_temp, use_container_width=True)
 
 # --- FLIK 2: IMD: VATTENFÖRBRUKNING ---
-with tab2:
+# Körs endast om "IMD: Vattenförbrukning" är vald i sidebar.
+elif selected_tab == "imd":
     st.header("IMD: Vattenförbrukningskalkyl")
     st.markdown("Fokus: Minska vatten- och varmvattenförbrukning genom individuell mätning och debitering (IMD), t.ex. Quandify.")
     st.markdown("---")
@@ -215,7 +218,8 @@ with tab2:
     st.plotly_chart(fig_imd, use_container_width=True)
 
 # --- FLIK 3: VATTENSKADESKYDD ---
-with tab3:
+# Körs endast om "Vattenskadeskydd" är vald i sidebar.
+elif selected_tab == "skada":
     st.header("Vattenskadeskyddskalkyl")
     st.markdown("Fokus: Undvika kostsamma vattenskador genom tidig upptäckt av läckagesensorer, t.ex. Elsys.")
     st.markdown("---")
@@ -261,6 +265,3 @@ with tab3:
     with st.expander("Beräkningsdetaljer"):
         st.write(f"Besparing från undvikta skadekostnader ({besparing_procent_skador:.1f}% av {tot_skadekostnad_utan_iot:,.0f} kr): **{besparing_skador_kr:,.0f} kr**")
         st.write(f"Övrig underhållsbesparing (från Excel): **{antal_lgh * uh_besparing_skada_lgh:,.0f} kr**")
-
-
- 
