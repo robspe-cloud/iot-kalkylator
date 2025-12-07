@@ -68,17 +68,24 @@ url_calc_key = query_params.get("kalkyl", ["temp"])[0].lower() # Hämta 'imd', '
 active_tab = url_calc_key if url_calc_key in CALC_OPTIONS.values() else "temp"
 radio_default_name = KEY_MAP_REVERSE.get(active_tab, "🌡️ Temperatur & Energi")
 
+# --- KRITISK SYNKRONISERINGSLOGIK ---
+needs_rerun = False
+
 if 'radio_calc_selection' in st.session_state:
     # Hitta nyckeln för det som för närvarande är valt i Session State
     current_key_in_state = CALC_OPTIONS.get(st.session_state.radio_calc_selection)
     
     # Återställ Session State för radioknappen om URL-nyckeln skiljer sig från Session State-nyckeln.
-    # Detta tvingar fram URL-valet vid sidladdning.
     if current_key_in_state != active_tab:
         st.session_state.radio_calc_selection = radio_default_name
+        needs_rerun = True # Vi behöver ladda om för att Session State ska tillämpas korrekt på radio-knappen
 else:
     # Sätt Session State baserat på URL om den inte är satt
     st.session_state['radio_calc_selection'] = radio_default_name
+    # Ingen rerun behövs här eftersom Session State är satt innan radio-knappen renderas
+
+if needs_rerun:
+    st.experimental_rerun() # Tvingar fram en omladdning om Session State behövde korrigeras.
 
 
 # --- HJÄLP OCH INSTRUKTIONER (WIKI) ---
@@ -103,9 +110,6 @@ with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn")
     
     ### 5. Dela Appen och Förinställda Kalkyler (Länkdelning) 🔗
     Du kan dela en länk som öppnar kalkylatorn direkt på en specifik flik.
-
-    1.  **Hitta din Bas-URL:** Kopiera den vanliga adressen från din webbläsare (t.ex. `https://[ditt-appnamn].streamlit.app/`).
-    2.  **Lägg till Parametern:** Lägg till `?kalkyl=` följt av önskad kalkylnyckel i slutet av din Bas-URL.
 
     | Kalkyl du vill dela | Parameter att lägga till | Exempel på hur din länk ser ut |
     | :--- | :--- | :--- |
