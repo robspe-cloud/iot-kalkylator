@@ -44,8 +44,8 @@ st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
 st.title("💰 ROI Kalkylator: Fastighets-IoT")
 st.markdown("---")
 
-# --- INITIALISERING AV SESSION STATE (ALLA INPUTS) ---
-# Detta garanterar att alla nycklar existerar INNAN de läses av spara/ladda-funktionen.
+# --- INITIALISERING AV SESSION STATE (ALLA INPUTS MÅSTE DEFINIERAS HÄR) ---
+# Detta garanterar att alla nycklar existerar INNAN de läses/skrivs.
 
 # Gemensamma Indata
 if 'antal_lgh_main' not in st.session_state: st.session_state.antal_lgh_main = 1000
@@ -79,21 +79,25 @@ if 'besparing_skada_pct' not in st.session_state: st.session_state.besparing_ska
 if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_besparing_skada_lgh = 171
 
 
-# --- URL-PARAMETER STYRNING FÖR AKTIV FLIK ---
-query_params = st.query_params
-active_tab_name = query_params.get("tab", ["temp"])[0].lower() 
-tab_names = ["temp", "imd", "skada"]
-try:
-    default_tab_index = tab_names.index(active_tab_name)
-except ValueError:
-    default_tab_index = 0
+# --- NAVIGATION OCH SIDEBAR FÖR GEMENSAMMA INDATA ---
 
-# --- FLIK DEFINITION (st.tabs) ---
-tab1, tab2, tab3 = st.tabs(["🌡️ Temperatur & Energi", "💧 IMD: Vattenförbrukning", "🚨 Vattenskadeskydd"], default_index=default_tab_index)
+tab_options = {
+    "🌡️ Temperatur & Energi": "temp", 
+    "💧 IMD: Vattenförbrukning": "imd", 
+    "🚨 Vattenskadeskydd": "skada"
+}
 
-
-# --- SIDEBAR FÖR GEMENSAMMA INDATA ---
 with st.sidebar:
+    st.header("🔎 Välj Kalkyl")
+    # Använder st.radio istället för st.tabs för maximal kompatibilitet
+    selected_tab_key = st.radio(
+        "Välj det område du vill analysera:", 
+        options=list(tab_options.keys()), 
+        index=0,
+    )
+    selected_tab = tab_options[selected_tab_key]
+    
+    st.markdown("---")
     st.header("⚙️ Gemensamma Driftskostnader")
     
     antal_lgh = st.number_input("Antal lägenheter i fastigheten", value=st.session_state.antal_lgh_main, step=10, key='antal_lgh_main')
@@ -112,7 +116,8 @@ with st.sidebar:
 
 
 # --- FLIK 1: TEMPERATUR & ENERGI ---
-with tab1:
+# Körs endast om "Temperatur & Energi" är vald i sidebar.
+if selected_tab == "temp":
     st.header("Temperatur- och Energikalkyl")
     st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
     st.markdown("---")
@@ -127,7 +132,7 @@ with tab1:
         if uploaded_file is not None:
             try:
                 scenario_data = json.load(uploaded_file)
-                # Uppdatera Streamlit Session State för ALLA inputs.
+                # Uppdatera Streamlit Session State för ALLA inputs. Måste matcha nycklarna i koden.
                 for key, value in scenario_data.items():
                     if key in st.session_state:
                         st.session_state[key] = value
@@ -137,7 +142,7 @@ with tab1:
 
     # 2. Spara Scenario
     with col_save:
-        # Samla in alla relevanta input-värden i en diktamen (Session state läses nu utan fel)
+        # Samla in alla relevanta input-värden i en diktamen
         scenario_data_to_save = {
             'antal_lgh_main': st.session_state.antal_lgh_main,
             'uh_per_sensor': st.session_state.uh_per_sensor,
@@ -196,7 +201,8 @@ with tab1:
     st.plotly_chart(fig_temp, use_container_width=True)
 
 # --- FLIK 2: IMD: VATTENFÖRBRUKNING ---
-with tab2:
+# Körs endast om "IMD: Vattenförbrukning" är vald i sidebar.
+elif selected_tab == "imd":
     st.header("IMD: Vattenförbrukningskalkyl")
     st.markdown("Fokus: Minska vatten- och varmvattenförbrukning genom individuell mätning och debitering (IMD), t.ex. Quandify.")
     st.markdown("---")
@@ -223,7 +229,8 @@ with tab2:
     st.plotly_chart(fig_imd, use_container_width=True)
 
 # --- FLIK 3: VATTENSKADESKYDD ---
-with tab3:
+# Körs endast om "Vattenskadeskydd" är vald i sidebar.
+elif selected_tab == "skada":
     st.header("Vattenskadeskyddskalkyl")
     st.markdown("Fokus: Undvika kostsamma vattenskador genom tidig upptäckt av läckagesensorer, t.ex. Elsys.")
     st.markdown("---")
