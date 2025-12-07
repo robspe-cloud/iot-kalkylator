@@ -115,14 +115,21 @@ with st.sidebar:
     st.header("🔎 Välj Kalkyl")
     
     # ENKEL OCH STABIL NAVIGATION MED st.radio
+    # Lägger till ett tomt standardalternativ (index=0)
+    display_options = ["— Välj en kalkyl —"] + list(CALC_OPTIONS.keys())
+    
     selected_calc_name = st.radio(
         "Välj det område du vill analysera:", 
-        options=list(CALC_OPTIONS.keys()), 
+        options=display_options,
+        index=0, # Starta på det tomma alternativet
         key='radio_calc_selection'
     )
     
     # Bestäm aktiv flik baserat på valet
-    active_tab = CALC_OPTIONS[selected_calc_name]
+    if selected_calc_name == "— Välj en kalkyl —":
+        active_tab = "" # Tom sträng betyder välkomstmeddelande
+    else:
+        active_tab = CALC_OPTIONS[selected_calc_name]
     
     st.markdown("---")
     st.header("⚙️ Gemensamma Driftskostnader")
@@ -145,8 +152,13 @@ with st.sidebar:
 
 # --- 2. INNEHÅLLSBLOCK STYRS AV active_tab ---
 
+# --- VÄLKOMSTSKÄRM (Nytt startläge) ---
+if active_tab == "":
+    st.info("👋 Välkommen! Vänligen välj en kalkyl i sidofältet till vänster (t.ex. '🌡️ Temperatur & Energi') för att börja beräkna ROI.")
+    st.balloons() # Liten visuell touch på startsidan
+
 # --- FLIK 1: TEMPERATUR & ENERGI ---
-if active_tab == "temp":
+elif active_tab == "temp":
     st.header("Temperatur- och Energikalkyl")
     st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
     st.markdown("---")
