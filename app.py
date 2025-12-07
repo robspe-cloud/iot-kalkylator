@@ -80,11 +80,26 @@ if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_bespari
 
 # --- NAVIGATION OCH SIDEBAR FÖR GEMENSAMMA INDATA ---
 
+# 1. MAPPING AV LÄNKNAMN TILL FLIKNAMN
 tab_options = {
     "🌡️ Temperatur & Energi": "temp", 
     "💧 IMD: Vattenförbrukning": "imd", 
     "🚨 Vattenskadeskydd": "skada"
 }
+
+# 2. HÄMTA URL-PARAMETER OCH BERÄKNA INDEX
+query_params = st.query_params
+active_calc_name = query_params.get("kalkyl", ["temp"])[0].lower() # T.ex. hämtar 'imd' från ?kalkyl=imd
+
+# Skapa omvänd mapping för att hitta textnyckeln baserat på URL-värdet
+key_map = {v: k for k, v in tab_options.items()} 
+default_selected_key = key_map.get(active_calc_name, "🌡️ Temperatur & Energi")
+
+# Hitta det index som st.radio ska starta på
+try:
+    default_index = list(tab_options.keys()).index(default_selected_key) 
+except ValueError:
+    default_index = 0 # Fallback om URL-parametern är ogiltig
 
 with st.sidebar:
     st.header("🔎 Välj Kalkyl")
@@ -92,7 +107,7 @@ with st.sidebar:
     selected_tab_key = st.radio(
         "Välj det område du vill analysera:", 
         options=list(tab_options.keys()), 
-        index=0,
+        index=default_index, # ANVÄNDER NU DET DYNAMISKA INDEXET
     )
     selected_tab = tab_options[selected_tab_key]
     
@@ -120,27 +135,25 @@ if selected_tab == "temp":
     st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
     st.markdown("---")
 
-    # --- FUNKTIONER FÖR SPARA/LADDA SCENARIO ---
-    st.subheader("Spara/Ladda Scenario")
+    # --- FUNKTIONER FÖR SPARA/LADDA SCENARIO (TEMPERATUR) ---
+    st.subheader("Spara/Ladda Scenario (Temperatur)")
     col_save, col_load = st.columns([1, 2])
     
     # 1. Ladda Scenario
     with col_load:
-        uploaded_file = st.file_uploader("Ladda Scenario (.json)", type="json", key='scenario_uploader')
+        uploaded_file = st.file_uploader("Ladda Temperatur Scenario (.json)", type="json", key='temp_scenario_uploader')
         if uploaded_file is not None:
             try:
                 scenario_data = json.load(uploaded_file)
-                # Uppdatera Streamlit Session State för ALLA inputs. 
                 for key, value in scenario_data.items():
                     if key in st.session_state:
                         st.session_state[key] = value
-                st.success("Scenario laddat! Kalkylen har uppdaterats.")
+                st.success("Temperatur Scenario laddat! Kalkylen har uppdaterats. Vänligen tryck på fliken igen för att se uppdateringen.")
             except Exception as e:
                 st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
 
     # 2. Spara Scenario
     with col_save:
-        # Samla in alla relevanta input-värden i en diktamen
         scenario_data_to_save = {
             'antal_lgh_main': st.session_state.antal_lgh_main,
             'uh_per_sensor': st.session_state.uh_per_sensor,
@@ -161,7 +174,7 @@ if selected_tab == "temp":
         json_data = json.dumps(scenario_data_to_save, indent=4)
         
         st.download_button(
-            label="Spara Scenario (.json)",
+            label="Spara Temperatur Scenario (.json)",
             data=json_data,
             file_name="iot_temp_scenario.json",
             mime="application/json",
@@ -204,6 +217,51 @@ elif selected_tab == "imd":
     st.markdown("Fokus: Minska vatten- och varmvattenförbrukning genom individuell mätning och debitering (IMD), t.ex. Quandify.")
     st.markdown("---")
     
+    # --- FUNKTIONER FÖR SPARA/LADDA SCENARIO (IMD) ---
+    st.subheader("Spara/Ladda Scenario (IMD)")
+    col_save, col_load = st.columns([1, 2])
+    
+    # 1. Ladda Scenario
+    with col_load:
+        # NY NYCKEL FÖR UPLOADER
+        uploaded_file = st.file_uploader("Ladda IMD Scenario (.json)", type="json", key='imd_scenario_uploader') 
+        if uploaded_file is not None:
+            try:
+                scenario_data = json.load(uploaded_file)
+                for key, value in scenario_data.items():
+                    if key in st.session_state:
+                        st.session_state[key] = value
+                st.success("IMD Scenario laddat! Kalkylen har uppdaterats. Vänligen tryck på fliken igen för att se uppdateringen.")
+            except Exception as e:
+                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
+
+    # 2. Spara Scenario
+    with col_save:
+        # Samla in IMD-specifika och gemensamma input-värden
+        scenario_data_to_save = {
+            'antal_lgh_main': st.session_state.antal_lgh_main,
+            'uh_per_sensor': st.session_state.uh_per_sensor,
+            'lora_cost': st.session_state.lora_cost,
+            'web_cost': st.session_state.web_cost,
+            'app_cost': st.session_state.app_cost,
+            
+            # IMD specifika nycklar
+            'pris_sensor_imd': st.session_state.pris_sensor_imd,
+            'pris_install_imd': st.session_state.pris_install_imd,
+            'besparing_lgh_vatten': st.session_state.besparing_lgh_vatten,
+            'besparing_lgh_uh_imd': st.session_state.besparing_lgh_uh_imd
+        }
+        json_data = json.dumps(scenario_data_to_save, indent=4)
+        
+        st.download_button(
+            label="Spara IMD Scenario (.json)",
+            data=json_data,
+            file_name="iot_imd_scenario.json", # NYTT FILNAMN
+            mime="application/json",
+            help="Sparar alla aktuella reglagevärden till en fil."
+        )
+    st.markdown("---")
+    
     col3, col4 = st.columns(2)
     
     with col3:
@@ -229,6 +287,53 @@ elif selected_tab == "imd":
 elif selected_tab == "skada":
     st.header("Vattenskadeskyddskalkyl")
     st.markdown("Fokus: Undvika kostsamma vattenskador genom tidig upptäckt av läckagesensorer, t.ex. Elsys.")
+    st.markdown("---")
+    
+    # --- FUNKTIONER FÖR SPARA/LADDA SCENARIO (VATTENSKADA) ---
+    st.subheader("Spara/Ladda Scenario (Vattenskada)")
+    col_save, col_load = st.columns([1, 2])
+    
+    # 1. Ladda Scenario
+    with col_load:
+        # NY NYCKEL FÖR UPLOADER
+        uploaded_file = st.file_uploader("Ladda Vattenskada Scenario (.json)", type="json", key='skada_scenario_uploader') 
+        if uploaded_file is not None:
+            try:
+                scenario_data = json.load(uploaded_file)
+                for key, value in scenario_data.items():
+                    if key in st.session_state:
+                        st.session_state[key] = value
+                st.success("Vattenskada Scenario laddat! Kalkylen har uppdaterats. Vänligen tryck på fliken igen för att se uppdateringen.")
+            except Exception as e:
+                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
+
+    # 2. Spara Scenario
+    with col_save:
+        # Samla in Vattenskada-specifika och gemensamma input-värden
+        scenario_data_to_save = {
+            'antal_lgh_main': st.session_state.antal_lgh_main,
+            'uh_per_sensor': st.session_state.uh_per_sensor,
+            'lora_cost': st.session_state.lora_cost,
+            'web_cost': st.session_state.web_cost,
+            'app_cost': st.session_state.app_cost,
+            
+            # Vattenskada specifika nycklar
+            'pris_sensor_skada': st.session_state.pris_sensor_skada,
+            'pris_install_skada': st.session_state.pris_install_skada,
+            'kostnad_skada': st.session_state.kostnad_skada,
+            'frekvens_skada': st.session_state.frekvens_skada,
+            'besparing_skada_pct': st.session_state.besparing_skada_pct,
+            'uh_besparing_skada_lgh': st.session_state.uh_besparing_skada_lgh
+        }
+        json_data = json.dumps(scenario_data_to_save, indent=4)
+        
+        st.download_button(
+            label="Spara Vattenskada Scenario (.json)",
+            data=json_data,
+            file_name="iot_skada_scenario.json", # NYTT FILNAMN
+            mime="application/json",
+            help="Sparar alla aktuella reglagevärden till en fil."
+        )
     st.markdown("---")
     
     col5, col6 = st.columns(2)
