@@ -61,16 +61,19 @@ st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
 st.title("💰 IoT ROI Kalkylator")
 st.markdown("---")
 
-# --- 1. BESTÄM AKTIV FLIK FRÅN URL ---
+# --- 1. INITIALISERING OCH URL-HANTERING (NY ROBUST METOD) ---
+
+# 1. Hämta URL-parameter
 query_params = st.query_params
 url_calc_key = query_params.get("kalkyl", ["temp"])[0].lower() # Hämta 'imd', 'skada', eller default 'temp'
-
-# Filtrera till en giltig nyckel, annars default till "temp"
 active_tab_key = url_calc_key if url_calc_key in CALC_OPTIONS.values() else "temp"
-
-# Hitta displaynamnet för sidofältsknappen och dess index
 radio_default_name = KEY_MAP_REVERSE.get(active_tab_key, "🌡️ Temperatur & Energi")
-radio_default_index = list(CALC_OPTIONS.keys()).index(radio_default_name)
+
+# 2. Sätt Session State baserat på URL (endast om det är första render)
+# Detta tvingar fram rätt val i st.radio oavsett index-problem.
+if 'radio_calc_selection' not in st.session_state:
+    st.session_state['radio_calc_selection'] = radio_default_name
+
 
 # --- HJÄLP OCH INSTRUKTIONER (WIKI) ---
 with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn"):
@@ -147,13 +150,14 @@ if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_bespari
 with st.sidebar:
     st.header("🔎 Välj Kalkyl")
     
-    # 2. DEFINIERA RADIO-KNAPPEN OCH FÅNGA UTVÄNDIGT VAL
+    # st.radio använder nu Session State ('radio_calc_selection') som källa för valt värde.
+    # Det värdet sattes ovan, baserat på URL-parametern, vid första körningen.
     selected_calc_name = st.radio(
         "Välj det område du vill analysera:", 
         options=list(CALC_OPTIONS.keys()), 
-        index=radio_default_index, # <-- Tvingar fram valet från URL-parametern
-        key='radio_calc_selection', # Nyckel som lagrar det markerade namnet (t.ex. "💧 IMD: Vattenförbrukning")
-        on_change=update_tab_key # Call-back som uppdaterar URL:en
+        # Vi tar bort 'index' och låter 'key' och dess session state styra.
+        key='radio_calc_selection', 
+        on_change=update_tab_key
     )
     
     # Active tab är nu det som st.radio returnerade vid denna render-cykel.
@@ -200,7 +204,6 @@ if active_tab == "temp":
                     if key in st.session_state:
                         st.session_state[key] = value
                 st.success("Temperatur Scenario laddat! Sidan laddas om för att visa de uppdaterade värdena.")
-                # Tvinga en omladdning för att reglagen ska visa de nya Session State-värdena korrekt
                 st.experimental_rerun()
             except Exception as e:
                 st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
