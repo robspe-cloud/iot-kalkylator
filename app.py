@@ -3,6 +3,26 @@ import pandas as pd
 import plotly.graph_objects as go
 import json
 
+# --- KONSTANTER OCH MAPPNING ---
+CALC_OPTIONS = {
+    "🌡️ Temperatur & Energi": "temp", 
+    "💧 IMD: Vattenförbrukning": "imd", 
+    "🚨 Vattenskadeskydd": "skada"
+}
+KEY_MAP_REVERSE = {v: k for k, v in CALC_OPTIONS.items()} 
+
+# --- CALLBACK FUNKTION ---
+def update_tab_key():
+    """Uppdaterar Session State och URL när användaren klickar på en ny radio-knapp."""
+    selected_display_name = st.session_state.radio_calc_selection
+    new_calc_key = CALC_OPTIONS[selected_display_name]
+    
+    # 1. Uppdatera Session State (den sanna källan till aktiv flik)
+    st.session_state.active_tab_key = new_calc_key
+    
+    # 2. Uppdatera URL-parametern (för att möjliggöra delning via URL)
+    st.query_params['kalkyl'] = new_calc_key
+
 # --- FUNKTIONER FÖR BERÄKNINGAR OCH VISUALISERING ---
 
 def create_cashflow_chart(initial_cost, net_annual_flow, title):
@@ -41,8 +61,15 @@ def display_kpis(initial, netto, payback):
 
 st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
 
-st.title("💰 IoT ROI Kalkylator") # UPPDATERAD TITEL
+st.title("💰 IoT ROI Kalkylator")
 st.markdown("---")
+
+# --- INITIALISERING AV SESSION STATE FRÅN URL ---
+query_params = st.query_params
+url_calc_key = query_params.get("kalkyl", ["temp"])[0].lower() # Hämta 'imd', 'skada', eller default 'temp'
+
+if 'active_tab_key' not in st.session_state:
+    st.session_state.active_tab_key = url_calc_key
 
 # --- HJÄLP OCH INSTRUKTIONER (WIKI) ---
 with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn"):
@@ -65,7 +92,7 @@ with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn")
     * **Ladda:** Använd **"Ladda [Kalkylnamn] Scenario (.json)"** och välj en tidigare sparad fil. **Obs:** Efter laddning kan du behöva klicka på kalkylen i sidofältet en gång till för att se alla reglage uppdateras.
     
     ### 5. Dela Appen och Förinställda Kalkyler (Länkdelning) 🔗
-    Du kan dela en länk som öppnar kalkylatorn direkt på en specifik flik. Detta är användbart för att snabbt skicka en IMD-kalkyl till en kollega, t.ex.
+    Du kan dela en länk som öppnar kalkylatorn direkt på en specifik flik.
 
     1.  **Hitta din Bas-URL:** Kopiera den vanliga adressen från din webbläsare (t.ex. `https://[ditt-appnamn].streamlit.app/`).
     2.  **Lägg till Parametern:** Lägg till `?kalkyl=` följt av önskad kalkylnyckel i slutet av din Bas-URL.
@@ -80,7 +107,7 @@ with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn")
     """)
 st.markdown("---")
 
-# --- INITIALISERING AV SESSION STATE (ALLA INPUTS MÅSTE DEFINIERAS HÄR) ---
+# --- INITIALISERING AV ÖVRIG SESSION STATE (ALLA INPUTS MÅSTE DEFINIERAS HÄR) ---
 
 # Gemensamma Indata
 if 'antal_lgh_main' not in st.session_state: st.session_state.antal_lgh_main = 1000
@@ -116,36 +143,21 @@ if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_bespari
 
 # --- NAVIGATION OCH SIDEBAR FÖR GEMENSAMMA INDATA ---
 
-# 1. MAPPING AV LÄNKNAMN TILL FLIKNAMN
-tab_options = {
-    "🌡️ Temperatur & Energi": "temp", 
-    "💧 IMD: Vattenförbrukning": "imd", 
-    "🚨 Vattenskadeskydd": "skada"
-}
-
-# 2. HÄMTA URL-PARAMETER OCH BERÄKNA INDEX
-query_params = st.query_params
-active_calc_name = query_params.get("kalkyl", ["temp"])[0].lower() # T.ex. hämtar 'imd' från ?kalkyl=imd
-
-# Skapa omvänd mapping för att hitta textnyckeln baserat på URL-värdet
-key_map = {v: k for k, v in tab_options.items()} 
-default_selected_key = key_map.get(active_calc_name, "🌡️ Temperatur & Energi")
-
-# Hitta det index som st.radio ska starta på
-try:
-    default_index = list(tab_options.keys()).index(default_selected_key) 
-except ValueError:
-    default_index = 0 # Fallback om URL-parametern är ogiltig
+# Bestäm defaultnamnet för radio-knappen baserat på Session State (som initialiserades från URL:en)
+radio_default_name = KEY_MAP_REVERSE.get(st.session_state.active_tab_key, "🌡️ Temperatur & Energi")
+radio_default_index = list(CALC_OPTIONS.keys()).index(radio_default_name)
 
 with st.sidebar:
     st.header("🔎 Välj Kalkyl")
-    # ANVÄNDER st.radio ISTÄLLET FÖR st.tabs FÖR STABILITET
-    selected_tab_key = st.radio(
+    
+    # Använd Session State och on_change för robust navigering
+    st.radio(
         "Välj det område du vill analysera:", 
-        options=list(tab_options.keys()), 
-        index=default_index, # ANVÄNDER NU DET DYNAMISKA INDEXET
+        options=list(CALC_OPTIONS.keys()), 
+        index=radio_default_index, 
+        key='radio_calc_selection', # Nyckel för radio-knappen
+        on_change=update_tab_key # Call-back som uppdaterar Session State och URL
     )
-    selected_tab = tab_options[selected_tab_key]
     
     st.markdown("---")
     st.header("⚙️ Gemensamma Driftskostnader")
@@ -165,8 +177,12 @@ with st.sidebar:
     total_drift_ar = (antal_lgh * total_drift_ar_per_sensor) + applikation_kostnad
 
 
+# Den aktiva fliken styrs nu av Session State, som initialiserades från URL:en
+active_tab = st.session_state.active_tab_key
+
+
 # --- FLIK 1: TEMPERATUR & ENERGI ---
-if selected_tab == "temp":
+if active_tab == "temp":
     st.header("Temperatur- och Energikalkyl")
     st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
     st.markdown("---")
@@ -248,7 +264,7 @@ if selected_tab == "temp":
     st.plotly_chart(fig_temp, use_container_width=True)
 
 # --- FLIK 2: IMD: VATTENFÖRBRUKNING ---
-elif selected_tab == "imd":
+elif active_tab == "imd":
     st.header("IMD: Vattenförbrukningskalkyl")
     st.markdown("Fokus: Minska vatten- och varmvattenförbrukning genom individuell mätning och debitering (IMD), t.ex. Quandify.")
     st.markdown("---")
@@ -320,7 +336,7 @@ elif selected_tab == "imd":
     st.plotly_chart(fig_imd, use_container_width=True)
 
 # --- FLIK 3: VATTENSKADESKYDD ---
-elif selected_tab == "skada":
+elif active_tab == "skada":
     st.header("Vattenskadeskyddskalkyl")
     st.markdown("Fokus: Undvika kostsamma vattenskador genom tidig upptäckt av läckagesensorer, t.ex. Elsys.")
     st.markdown("---")
