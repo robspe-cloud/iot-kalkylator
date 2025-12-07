@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import json
-from streamlit.components.v1 import html
 
 # --- KONSTANTER OCH MAPPNING ---
 CALC_OPTIONS = {
@@ -10,51 +9,9 @@ CALC_OPTIONS = {
     "💧 IMD: Vattenförbrukning": "imd", 
     "🚨 Vattenskadeskydd": "skada"
 }
-KEY_MAP_REVERSE = {v: k for k, v in CALC_OPTIONS.items()} 
-CALC_KEY_LIST = list(CALC_OPTIONS.values()) # ['temp', 'imd', 'skada']
+CALC_KEY_LIST = list(CALC_OPTIONS.values()) 
 
-# --- KRITISK FUNKTION FÖR NAVIGATION (ERSÄTTER st.radio & st.button) ---
-# Denna funktion genererar JavaScript för att tvinga en omdirigering av webbläsaren.
-def generate_nav_js_button(display_name, calc_key, is_active):
-    """
-    Genererar en HTML-knapp som omdirigerar webbläsaren till en ny URL med den nya kalkyl-parametern, 
-    vilket tvingar fram en fullständig omladdning och rensning av cachen.
-    """
-    # Hämta bas-URL (t.ex. https://app-name.streamlit.app/)
-    # Streamlit lägger till '?kalkyl=X' automatiskt vid första omladdningen.
-    # Vi behöver bara veta bas-URL:en. Vi använder window.location.origin + window.location.pathname.
-    # För att hantera Streamlit Clouds iframes använder vi window.parent.location.
-    
-    
-    # Skapa URL med den nya parametern
-    new_url = f"window.parent.location.origin + window.parent.location.pathname + '?kalkyl={calc_key}'"
-    
-    # CSS för knappen (härmar Streamlit-knappar, primary eller secondary)
-    primary_css = "background-color: #f69c55; color: white; border: none;"
-    secondary_css = "background-color: #f0f2f6; color: #4b4b4b; border: 1px solid #c9c9c9;"
-    css = primary_css if is_active else secondary_css
-    
-    html_code = f"""
-    <button 
-        onclick="window.parent.location.href = {new_url};"
-        style="{css} 
-               padding: 8px 16px; 
-               margin: 5px 0; 
-               border-radius: 0.5rem; 
-               width: 100%; 
-               cursor: pointer;
-               font-weight: 400;
-               text-align: left;
-               font-size: 14px;
-               transition: background-color 0.2s, border-color 0.2s;"
-    >
-        {display_name}
-    </button>
-    """
-    html(html_code, height=45)
-
-
-# --- FUNKTIONER FÖR BERÄKNINGAR OCH VISUALISERING (Oförändrade) ---
+# --- FUNKTIONER FÖR BERÄKNINGAR OCH VISUALISERING ---
 
 def create_cashflow_chart(initial_cost, net_annual_flow, title):
     """Genererar den ackumulerade kassaflödesgrafen."""
@@ -94,13 +51,6 @@ st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
 st.title("💰 IoT ROI Kalkylator")
 st.markdown("---")
 
-# --- 1. HÄMTA AKTIV FLIK FRÅN URL ---
-query_params = st.query_params
-url_calc_key = query_params.get("kalkyl", ["temp"])[0].lower() 
-
-# Definiera active_tab utifrån URL-nyckeln
-active_tab = url_calc_key if url_calc_key in CALC_OPTIONS.values() else "temp"
-
 # --- HJÄLP OCH INSTRUKTIONER (WIKI) ---
 with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn"):
     st.markdown("""
@@ -121,20 +71,11 @@ with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn")
     * **Spara:** Klicka på **"Spara [Kalkylnamn] Scenario (.json)"** för att ladda ner en JSON-fil med alla aktuella inställningar för den aktiva kalkylen.
     * **Ladda:** Använd **"Ladda [Kalkylnamn] Scenario (.json)"** och välj en tidigare sparad fil. **Obs:** Efter laddning kan du behöva klicka på kalkylen i sidofältet en gång till för att se alla reglage uppdateras.
     
-    ### 5. Dela Appen och Förinställda Kalkyler (Länkdelning) 🔗
-    Du kan dela en länk som öppnar kalkylatorn direkt på en specifik flik.
-
-    | Kalkyl du vill dela | Parameter att lägga till | Exempel på hur din länk ser ut |
-    | :--- | :--- | :--- |
-    | **IMD Vattenförbrukning** | `?kalkyl=imd` | `https://[din-app].streamlit.app/?kalkyl=imd` |
-    | **Vattenskadeskydd** | `?kalkyl=skada` | `https://[din-app].streamlit.app/?kalkyl=skada` |
-    | **Temperatur & Energi** | `?kalkyl=temp` | `https://[din-app].streamlit.app/?kalkyl=temp` |
-
-    **Viktigt:** Denna metod öppnar endast rätt flik med **standardvärdena**. Om du vill dela ett sparat scenario måste mottagaren ladda in `.json`-filen manuellt.
+    **OBS: Stöd för länkdelning/URL-parametrar är borttaget i denna version för ökad stabilitet.**
     """)
 st.markdown("---")
 
-# --- INITIALISERING AV ÖVRIG SESSION STATE (Input-värden) ---
+# --- INITIALISERING AV SESSION STATE (Input-värden) ---
 
 # Gemensamma Indata
 if 'antal_lgh_main' not in st.session_state: st.session_state.antal_lgh_main = 1000
@@ -173,12 +114,16 @@ if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_bespari
 with st.sidebar:
     st.header("🔎 Välj Kalkyl")
     
-    # ERSÄTTER st.radio/st.button med JS-drivna knappar
-    for display_name, calc_key in CALC_OPTIONS.items():
-        is_active = (calc_key == active_tab)
-        generate_nav_js_button(display_name, calc_key, is_active)
-
-
+    # ENKEL OCH STABIL NAVIGATION MED st.radio
+    selected_calc_name = st.radio(
+        "Välj det område du vill analysera:", 
+        options=list(CALC_OPTIONS.keys()), 
+        key='radio_calc_selection'
+    )
+    
+    # Bestäm aktiv flik baserat på valet
+    active_tab = CALC_OPTIONS[selected_calc_name]
+    
     st.markdown("---")
     st.header("⚙️ Gemensamma Driftskostnader")
     
