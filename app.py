@@ -44,6 +44,34 @@ st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
 st.title("💰 ROI Kalkylator: Fastighets-IoT")
 st.markdown("---")
 
+# --- HJÄLP OCH INSTRUKTIONER (WIKI) ---
+with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn"):
+    st.markdown("""
+    Denna kalkylator hjälper dig att uppskatta **Return on Investment (ROI)** för olika IoT-lösningar i fastigheter.
+
+    ### 1. Välj Kalkyl
+    Använd sidofältet till vänster (`🔎 Välj Kalkyl`) för att växla mellan de tre analysområdena: **Temperatur & Energi**, **IMD Vattenförbrukning**, och **Vattenskadeskydd**.
+
+    ### 2. Gemensamma Kostnader (Sidebar)
+    * Fälten i sidofältet (`⚙️ Gemensamma Driftskostnader`) – som Antal lägenheter, underhållskostnader och fasta årliga avgifter – påverkar **alla tre** kalkylerna. Justera dem först.
+
+    ### 3. Justera Scenariot
+    * I huvudfönstret för din valda kalkyl justerar du de **unika parametrarna** (t.ex. sensorpriser, installationskostnader och besparingsprocenter) för just det scenariot.
+    * Resultatet (KPI:er och kassaflödesgrafen) uppdateras omedelbart.
+
+    ### 4. Spara och Ladda Scenarier (Dela Varianter)
+    Du kan spara dina exakta parameterinställningar för senare användning, arkivering eller jämförelser.
+    * **Spara:** Klicka på **"Spara [Kalkylnamn] Scenario (.json)"** för att ladda ner en JSON-fil med alla aktuella inställningar för den aktiva kalkylen.
+    * **Ladda:** Använd **"Ladda [Kalkylnamn] Scenario (.json)"** och välj en tidigare sparad fil. **Obs:** Efter laddning kan du behöva klicka på kalkylen i sidofältet en gång till för att se alla reglage uppdateras.
+    
+    ### 5. Dela en Förinställd Kalkyl
+    Du kan dela en länk som öppnar kalkylatorn direkt på en specifik flik genom att lägga till `?kalkyl=` i slutet av din URL:
+    * **Temperatur:** `?kalkyl=temp`
+    * **IMD Vatten:** `?kalkyl=imd`
+    * **Vattenskadeskydd:** `?kalkyl=skada`
+    """)
+st.markdown("---")
+
 # --- INITIALISERING AV SESSION STATE (ALLA INPUTS MÅSTE DEFINIERAS HÄR) ---
 
 # Gemensamma Indata
