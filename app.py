@@ -33,7 +33,8 @@ def create_cashflow_chart(initial_cost, net_annual_flow, title):
     fig.update_layout(title=title, xaxis_title="År", yaxis_title="SEK", template="plotly_white")
     return fig, cashflow
 
-def display_kpis(initial, netto, payback):
+# Funktion för att visa KPIer för IMD/Skada (3 kolumner)
+def display_kpis_3(initial, netto, payback):
     """Visar de tre nyckeltalen."""
     col1_kpi, col2_kpi, col3_kpi = st.columns(3)
     initial = initial if initial is not None and initial >= 0 else 0
@@ -43,6 +44,24 @@ def display_kpis(initial, netto, payback):
     col1_kpi.metric("Total Investering", f"{initial:,.0f} kr".replace(",", " "))
     col2_kpi.metric("Årlig Nettobesparing", f"{netto:,.0f} kr".replace(",", " "), delta_color="normal")
     col3_kpi.metric("Payback-tid", f"{payback:.1f} år" if payback > 0 else "N/A")
+    
+# Funktion för att visa KPIer för Temp (4 kolumner, inkl. Besparing/Lgh/år)
+def display_kpis_4_temp(initial, netto, payback, besparing_lgh_ar):
+    """Visar de fyra nyckeltalen, inklusive besparing per lägenhet."""
+    col1_kpi, col2_kpi, col3_kpi, col4_kpi = st.columns(4)
+    initial = initial if initial is not None and initial >= 0 else 0
+    netto = netto if netto is not None else 0
+    payback = payback if payback is not None and payback >= 0 else 0
+    besparing_lgh_ar = besparing_lgh_ar if besparing_lgh_ar is not None else 0
+
+    col1_kpi.metric("Total Investering", f"{initial:,.0f} kr".replace(",", " "))
+    col2_kpi.metric("Årlig Nettobesparing", f"{netto:,.0f} kr".replace(",", " "), delta_color="normal")
+    
+    # NY KPI: Besparing per lägenhet och år
+    col3_kpi.metric("Besparing/Lgh/år", f"{besparing_lgh_ar:,.0f} kr".replace(",", " "), delta_color="normal")
+
+    col4_kpi.metric("Payback-tid", f"{payback:.1f} år" if payback > 0 else "N/A")
+
 
 # --- HUVUDAPPLIKATION ---
 
@@ -146,7 +165,7 @@ if active_tab == "":
     st.info("👋 Välkommen! Vänligen välj en kalkyl i sidofältet till vänster (t.ex. '🌡️ Temperatur & Energi') för att börja beräkna ROI.")
     st.snow() 
 
-# --- FLIK 1: TEMPERATUR & ENERGI (Text UNDER boxen) ---
+# --- FLIK 1: TEMPERATUR & ENERGI (Text OVANFÖR boxen) ---
 elif active_tab == "temp":
     st.header("Temperatur- och Energikalkyl")
     st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
@@ -176,13 +195,13 @@ elif active_tab == "temp":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
     
-    # 2. Ladda-knapp (Höger kolumn - Text under)
+    # 2. Ladda-knapp (Höger kolumn - Text OVANFÖR)
     with col_load:
-        # VIKTIGT: Tom etikett för att dölja "Etikett" ovanför boxen
-        uploaded_file = st.file_uploader(label="", type="json", key='temp_scenario_uploader') 
+        # ÅTERSTÄLLD: Texten ovanför boxen
+        st.markdown("### Ladda Temperatur Scenario (.json)")
         
-        # NY TEXT PLACERAD UNDER UPLOADERN
-        st.markdown("*Ladda Temperatur Scenario (.json)*") 
+        # VIKTIGT: Tom etikett för att dölja Streamlits standardetikett 
+        uploaded_file = st.file_uploader(label="", type="json", key='temp_scenario_uploader') 
         
         if uploaded_file is not None:
             try:
@@ -223,9 +242,15 @@ elif active_tab == "temp":
             total_kwh_fastighet = antal_lgh * kvm_snitt * energiforbrukning_kvm
             besparing_energi_kr = total_kwh_fastighet * energipris * (besparing_procent / 100)
             besparing_underhall_kr = antal_lgh * underhall_besparing_lgh
+            
             total_besparing_temp = besparing_energi_kr + besparing_underhall_kr
             netto_temp = total_besparing_temp - total_drift_ar
             payback_temp = total_initial_temp / netto_temp if netto_temp > 0 else 0
+            
+            # NY KPI-BERÄKNING: Besparing per Lägenhet och År
+            besparing_lgh_ar = netto_temp / antal_lgh if antal_lgh > 0 else 0
+
+
         
         # Knappen för att utlösa omkörning (Commit)
         if st.form_submit_button(label='Beräkna ROI', type='primary'):
@@ -240,11 +265,13 @@ elif active_tab == "temp":
             st.session_state.uh_besparing_temp = underhall_besparing_lgh
 
     # --- RESULTAT DISPLAY (Utanför Form) ---
-    display_kpis(total_initial_temp, netto_temp, payback_temp)
+    # ANVÄND NYA display_kpis_4_temp
+    display_kpis_4_temp(total_initial_temp, netto_temp, payback_temp, besparing_lgh_ar)
+    
     fig_temp, _ = create_cashflow_chart(total_initial_temp, netto_temp, "Ackumulerat Kassaflöde (Temperatur)")
     st.plotly_chart(fig_temp, use_container_width=True)
 
-# --- FLIK 2: IMD: VATTENFÖRBRUKNING (Text UNDER boxen) ---
+# --- FLIK 2: IMD: VATTENFÖRBRUKNING (Text OVANFÖR boxen) ---
 elif active_tab == "imd":
     st.header("IMD: Vattenförbrukningskalkyl")
     st.markdown("Fokus: Minska vatten- och varmvattenförbrukning genom individuell mätning och debitering (IMD), t.ex. Quandify.")
@@ -272,13 +299,12 @@ elif active_tab == "imd":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
     
-    # 2. Ladda-knapp (Höger kolumn - Text under)
+    # 2. Ladda-knapp (Höger kolumn - Text OVANFÖR)
     with col_load:
-        # VIKTIGT: Tom etikett för att dölja "Etikett" ovanför boxen
-        uploaded_file = st.file_uploader(label="", type="json", key='imd_scenario_uploader') 
+        # ÅTERSTÄLLD: Texten ovanför boxen
+        st.markdown("### Ladda IMD Scenario (.json)")
         
-        # NY TEXT PLACERAD UNDER UPLOADERN
-        st.markdown("*Ladda IMD Scenario (.json)*")
+        uploaded_file = st.file_uploader(label="", type="json", key='imd_scenario_uploader') 
 
         if uploaded_file is not None:
             try:
@@ -317,11 +343,12 @@ elif active_tab == "imd":
             st.session_state.besparing_lgh_vatten = besparing_per_lgh_vatten
             st.session_state.besparing_lgh_uh_imd = besparing_per_lgh_underhall
 
-    display_kpis(total_initial_imd, netto_imd, payback_imd)
+    # ANVÄND display_kpis_3 för IMD
+    display_kpis_3(total_initial_imd, netto_imd, payback_imd)
     fig_imd, _ = create_cashflow_chart(total_initial_imd, netto_imd, "Ackumulerat Kassaflöde (IMD Vatten)")
     st.plotly_chart(fig_imd, use_container_width=True)
 
-# --- FLIK 3: VATTENSKADESKYDD (Text UNDER boxen) ---
+# --- FLIK 3: VATTENSKADESKYDD (Text OVANFÖR boxen) ---
 elif active_tab == "skada":
     st.header("Vattenskadeskyddskalkyl")
     st.markdown("Fokus: Undvika kostsamma vattenskador genom tidig upptäckt av läckagesensorer, t.ex. Elsys.")
@@ -350,13 +377,12 @@ elif active_tab == "skada":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
         
-    # 2. Ladda-knapp (Höger kolumn - Text under)
+    # 2. Ladda-knapp (Höger kolumn - Text OVANFÖR)
     with col_load:
-        # VIKTIGT: Tom etikett för att dölja "Etikett" ovanför boxen
-        uploaded_file = st.file_uploader(label="", type="json", key='skada_scenario_uploader') 
+        # ÅTERSTÄLLD: Texten ovanför boxen
+        st.markdown("### Ladda Vattenskada Scenario (.json)")
         
-        # NY TEXT PLACERAD UNDER UPLOADERN
-        st.markdown("*Ladda Vattenskada Scenario (.json)*")
+        uploaded_file = st.file_uploader(label="", type="json", key='skada_scenario_uploader') 
 
         if uploaded_file is not None:
             try:
@@ -402,7 +428,9 @@ elif active_tab == "skada":
             st.session_state.besparing_skada_pct = besparing_procent_skador
             st.session_state.uh_besparing_skada_lgh = uh_besparing_skada_lgh
 
-    display_kpis(total_initial_skada, netto_skada, payback_skada)
+    # ANVÄND display_kpis_3 för Skada
+    display_kpis_3(total_initial_skada, netto_skada, payback_skada)
+    
     fig_skada, _ = create_cashflow_chart(total_initial_skada, netto_skada, "Ackumulerat Kassaflöde (Vattenskadeskydd)")
     st.plotly_chart(fig_skada, use_container_width=True)
     
