@@ -178,7 +178,8 @@ elif active_tab == "temp":
     
     # 2. Ladda-knapp (Höger kolumn - Text under)
     with col_load:
-        uploaded_file = st.file_uploader(label="", type="json", key='temp_scenario_uploader') # st.file_uploader med tom etikett
+        # VIKTIGT: Tom etikett för att dölja "Etikett" ovanför boxen
+        uploaded_file = st.file_uploader(label="", type="json", key='temp_scenario_uploader') 
         
         # NY TEXT PLACERAD UNDER UPLOADERN
         st.markdown("*Ladda Temperatur Scenario (.json)*") 
@@ -273,6 +274,7 @@ elif active_tab == "imd":
     
     # 2. Ladda-knapp (Höger kolumn - Text under)
     with col_load:
+        # VIKTIGT: Tom etikett för att dölja "Etikett" ovanför boxen
         uploaded_file = st.file_uploader(label="", type="json", key='imd_scenario_uploader') 
         
         # NY TEXT PLACERAD UNDER UPLOADERN
@@ -350,6 +352,7 @@ elif active_tab == "skada":
         
     # 2. Ladda-knapp (Höger kolumn - Text under)
     with col_load:
+        # VIKTIGT: Tom etikett för att dölja "Etikett" ovanför boxen
         uploaded_file = st.file_uploader(label="", type="json", key='skada_scenario_uploader') 
         
         # NY TEXT PLACERAD UNDER UPLOADERN
