@@ -45,33 +45,32 @@ def display_kpis_3(initial, netto, payback):
     col2_kpi.metric("Årlig Nettobesparing", f"{netto:,.0f} kr".replace(",", " "), delta_color="normal")
     col3_kpi.metric("Payback-tid", f"{payback:.1f} år" if payback > 0 else "N/A")
     
-# Uppdaterad funktion för att visa KPIer för Temp (5 kolumner, uppdelat på två rader)
-# Visar nu TOTAL Driftkostnad för hela fastigheten.
+# Uppdaterad funktion för att visa KPIer för Temp (5 KPI:er i 3+3 layout)
 def display_kpis_5_temp(initial, netto, payback, besparing_lgh_ar, total_drift_ar):
     """Visar de fem nyckeltalen, inkl. Brutto/Netto och TOTAL driftskostnad för fastigheten."""
-    # Rad 1: Investering, Bruttobesparing/Lgh, Total Driftkostnad
-    row1_kpi_col1, row1_kpi_col2, row1_kpi_col3 = st.columns(3)
     
-    # Rad 2: Nettoresultat och Payback
-    row2_kpi_col1, row2_kpi_col2 = st.columns(2)
-
     initial = initial if initial is not None and initial >= 0 else 0
     besparing_lgh_ar = besparing_lgh_ar if besparing_lgh_ar is not None else 0
     total_drift_ar = total_drift_ar if total_drift_ar is not None else 0
     netto = netto if netto is not None else 0
     payback = payback if payback is not None and payback >= 0 else 0
     
+    # RAD 1: (3 kolumner: Investering, Brutto Besparing, Driftkostnad)
+    row1_kpi_col1, row1_kpi_col2, row1_kpi_col3 = st.columns(3)
+    
     row1_kpi_col1.metric("Total Investering", f"{initial:,.0f} kr".replace(",", " "))
-    
-    # BRUTTO-BESPARING
     row1_kpi_col2.metric("Brutto Energibesparing/Lgh/år", f"{besparing_lgh_ar:,.0f} kr".replace(",", " "), delta_color="normal")
-    
-    # KORRIGERAD KPI: TOTAL Driftkostnad för Fastigheten
     row1_kpi_col3.metric("Årlig Driftkostnad (Fastighet)", f"{total_drift_ar:,.0f} kr".replace(",", " "), delta_color="inverse")
     
-    # NETTO-RESULTAT (Hela fastigheten)
+    # RAD 2: (3 kolumner: Netto Besparing, Payback, TOM/NULL-kolumn för linjering)
+    # Genom att använda st.columns(3) tvingas kolumnerna att ha samma bredd som rad 1.
+    row2_kpi_col1, row2_kpi_col2, row2_kpi_col3 = st.columns(3)
+    
     row2_kpi_col1.metric("Årlig Nettobesparing (Fastighet)", f"{netto:,.0f} kr".replace(",", " "), delta_color="normal")
     row2_kpi_col2.metric("Payback-tid", f"{payback:.1f} år" if payback > 0 else "N/A")
+    
+    # NULL-KOLUMN: Vi lägger inte in något i col3, men Streamlit behåller utrymmet
+    # row2_kpi_col3.metric(" ", " ") # Lämnas tom för att fungera som spacer
 
 
 # --- HUVUDAPPLIKATION ---
