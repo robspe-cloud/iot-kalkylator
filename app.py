@@ -69,7 +69,7 @@ with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn")
     ### 4. Spara och Ladda Scenarier (Dela Varianter)
     Du kan spara dina exakta parameterinställningar för senare användning, arkivering eller jämförelser.
     * **Spara:** Använd knappen **"Spara [Kalkylnamn] Scenario (.json)"** för att ladda ner en JSON-fil med alla aktuella inställningar för den aktiva kalkylen.
-    * **Ladda:** Använd knappen **"Ladda [Kalkylnamn] Scenario (.json)"** och välj en tidigare sparad fil. **Obs:** Efter laddning kan du behöva klicka på **"Beräkna ROI"** för att säkerställa att alla värden används i kalkylen.
+    * **Ladda:** Använd filväljaren nedanför för att ladda en tidigare sparad fil.
     """)
 st.markdown("---")
 
@@ -105,7 +105,6 @@ if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_bespari
 
 
 # --- NAVIGATION OCH SIDEBAR FÖR GEMENSAMMA INDATA ---
-# (Behåll Sidebar som i din version)
 
 with st.sidebar:
     st.header("🔎 Välj Kalkyl")
@@ -149,7 +148,7 @@ if active_tab == "":
     st.info("👋 Välkommen! Vänligen välj en kalkyl i sidofältet till vänster (t.ex. '🌡️ Temperatur & Energi') för att börja beräkna ROI.")
     st.snow() 
 
-# --- FLIK 1: TEMPERATUR & ENERGI (Korrigerad ordning för Spara/Ladda) ---
+# --- FLIK 1: TEMPERATUR & ENERGI (Korrigerad ordning för Spara/Ladda + tom Ladda-etikett) ---
 elif active_tab == "temp":
     st.header("Temperatur- och Energikalkyl")
     st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
@@ -180,10 +179,10 @@ elif active_tab == "temp":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
     
-    # 2. Ladda-knapp (Höger kolumn - Visas under Spara i en bred layout)
+    # 2. Ladda-knapp (Höger kolumn - Etiketten är tom/gömd)
     with col_load:
-        # Flyttad Ladda-funktionalitet
-        uploaded_file = st.file_uploader("Ladda Temperatur Scenario (.json)", type="json", key='temp_scenario_uploader')
+        # Etiketten är nu tom: label=""
+        uploaded_file = st.file_uploader("", type="json", key='temp_scenario_uploader')
         if uploaded_file is not None:
             try:
                 scenario_data = json.load(uploaded_file)
@@ -244,7 +243,7 @@ elif active_tab == "temp":
     fig_temp, _ = create_cashflow_chart(total_initial_temp, netto_temp, "Ackumulerat Kassaflöde (Temperatur)")
     st.plotly_chart(fig_temp, use_container_width=True)
 
-# --- FLIK 2: IMD: VATTENFÖRBRUKNING (Korrigerad ordning för Spara/Ladda) ---
+# --- FLIK 2: IMD: VATTENFÖRBRUKNING (Korrigerad ordning för Spara/Ladda + tom Ladda-etikett) ---
 elif active_tab == "imd":
     st.header("IMD: Vattenförbrukningskalkyl")
     st.markdown("Fokus: Minska vatten- och varmvattenförbrukning genom individuell mätning och debitering (IMD), t.ex. Quandify.")
@@ -273,9 +272,9 @@ elif active_tab == "imd":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
     
-    # 2. Ladda-knapp (Höger kolumn)
+    # 2. Ladda-knapp (Höger kolumn - Etiketten är tom/gömd)
     with col_load:
-        uploaded_file = st.file_uploader("Ladda IMD Scenario (.json)", type="json", key='imd_scenario_uploader') 
+        uploaded_file = st.file_uploader("", type="json", key='imd_scenario_uploader') 
         if uploaded_file is not None:
             try:
                 scenario_data = json.load(uploaded_file)
@@ -317,7 +316,7 @@ elif active_tab == "imd":
     fig_imd, _ = create_cashflow_chart(total_initial_imd, netto_imd, "Ackumulerat Kassaflöde (IMD Vatten)")
     st.plotly_chart(fig_imd, use_container_width=True)
 
-# --- FLIK 3: VATTENSKADESKYDD (Korrigerad ordning för Spara/Ladda) ---
+# --- FLIK 3: VATTENSKADESKYDD (Korrigerad ordning för Spara/Ladda + tom Ladda-etikett) ---
 elif active_tab == "skada":
     st.header("Vattenskadeskyddskalkyl")
     st.markdown("Fokus: Undvika kostsamma vattenskador genom tidig upptäckt av läckagesensorer, t.ex. Elsys.")
@@ -347,9 +346,9 @@ elif active_tab == "skada":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
         
-    # 2. Ladda-knapp (Höger kolumn)
+    # 2. Ladda-knapp (Höger kolumn - Etiketten är tom/gömd)
     with col_load:
-        uploaded_file = st.file_uploader("Ladda Vattenskada Scenario (.json)", type="json", key='skada_scenario_uploader') 
+        uploaded_file = st.file_uploader("", type="json", key='skada_scenario_uploader') 
         if uploaded_file is not None:
             try:
                 scenario_data = json.load(uploaded_file)
