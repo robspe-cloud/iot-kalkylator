@@ -115,19 +115,19 @@ with st.sidebar:
     st.header("🔎 Välj Kalkyl")
     
     # ENKEL OCH STABIL NAVIGATION MED st.radio
-    # Lägger till ett tomt standardalternativ (index=0)
+    # Denna del tvingar hela skriptet att köras om vid val, vilket är bra.
     display_options = ["— Välj en kalkyl —"] + list(CALC_OPTIONS.keys())
     
     selected_calc_name = st.radio(
         "Välj det område du vill analysera:", 
         options=display_options,
-        index=0, # Starta på det tomma alternativet
+        index=0, 
         key='radio_calc_selection'
     )
     
     # Bestäm aktiv flik baserat på valet
     if selected_calc_name == "— Välj en kalkyl —":
-        active_tab = "" # Tom sträng betyder välkomstmeddelande
+        active_tab = "" 
     else:
         active_tab = CALC_OPTIONS[selected_calc_name]
     
@@ -155,7 +155,7 @@ with st.sidebar:
 # --- VÄLKOMSTSKÄRM (Nytt startläge) ---
 if active_tab == "":
     st.info("👋 Välkommen! Vänligen välj en kalkyl i sidofältet till vänster (t.ex. '🌡️ Temperatur & Energi') för att börja beräkna ROI.")
-    st.snow() # Liten visuell touch på startsidan
+    st.snow() 
 
 # --- FLIK 1: TEMPERATUR & ENERGI ---
 elif active_tab == "temp":
@@ -208,19 +208,24 @@ elif active_tab == "temp":
     
     with col1:
         st.subheader("Initial Investering")
+        # --- INPUTS ---
         pris_sensor_temp = st.number_input("Pris per Temp-sensor (kr)", value=st.session_state.pris_sensor_temp, key='pris_sensor_temp')
         pris_install_temp = st.number_input("Installation/Konfig. per sensor (kr)", value=st.session_state.pris_install_temp, key='pris_install_temp') 
         startkostnad_projekt_temp = st.number_input("Projektstartkostnad (kr)", value=st.session_state.startkostnad_temp, key='startkostnad_temp')
+        
+        # --- BERÄKNING: INITIAL KOSTNAD (Flyttad hit) ---
         total_initial_temp = antal_lgh * (pris_sensor_temp * 1.01 + pris_install_temp) + startkostnad_projekt_temp # 1% reserv
 
     with col2:
         st.subheader("Besparingsparametrar")
+        # --- INPUTS ---
         kvm_snitt = st.number_input("Snittyta per lgh (kvm)", value=st.session_state.kvm_snitt, key='kvm_snitt')
         energiforbrukning_kvm = st.number_input("Förbrukning (kWh/m²/år)", value=st.session_state.kwh_kvm, key='kwh_kvm')
         energipris = st.number_input("Energipris (kr/kWh)", value=st.session_state.pris_kwh, key='pris_kwh')
         besparing_procent = st.slider("Förväntad energibesparing (%)", 0.0, 15.0, value=st.session_state.besparing_temp, step=0.1, key='besparing_temp')
         underhall_besparing_lgh = st.number_input("Minskat underhåll/lgh (kr/år)", value=st.session_state.uh_besparing_temp, key='uh_besparing_temp')
         
+        # --- BERÄKNING: NETTO/BESPARING (Flyttad hit) ---
         total_kwh_fastighet = antal_lgh * kvm_snitt * energiforbrukning_kvm
         besparing_energi_kr = total_kwh_fastighet * energipris * (besparing_procent / 100)
         besparing_underhall_kr = antal_lgh * underhall_besparing_lgh
@@ -228,6 +233,7 @@ elif active_tab == "temp":
         netto_temp = total_besparing_temp - total_drift_ar
         payback_temp = total_initial_temp / netto_temp if netto_temp > 0 else 0
 
+    # --- RESULTAT DISPLAY ---
     display_kpis(total_initial_temp, netto_temp, payback_temp)
     fig_temp, _ = create_cashflow_chart(total_initial_temp, netto_temp, "Ackumulerat Kassaflöde (Temperatur)")
     st.plotly_chart(fig_temp, use_container_width=True)
@@ -373,4 +379,3 @@ elif active_tab == "skada":
     with st.expander("Beräkningsdetaljer"):
         st.write(f"Besparing från undvikna skadekostnader ({besparing_procent_skador:.1f}% av {tot_skadekostnad_utan_iot:,.0f} kr): **{besparing_skador_kr:,.0f} kr**")
         st.write(f"Övrig underhållsbesparing (från Excel): **{antal_lgh * uh_besparing_skada_lgh:,.0f} kr**")
-
