@@ -2,7 +2,3 @@
 # Use a stable, supported Python version instead of the default 3.13 environment.
 # This ensures full compatibility with st.tabs.
 python_version = "3.10"
-[browser]
-showsource = false
-[global]
-disable_provenance = true
