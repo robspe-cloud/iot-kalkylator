@@ -11,7 +11,24 @@ CALC_OPTIONS = {
 }
 CALC_KEY_LIST = list(CALC_OPTIONS.values()) 
 
-# --- FUNKTIONER FÖR BERÄKNINGAR OCH VISUALISERING ---
+# --- FUNKTIONER ---
+
+def safe_float_input(label, default_value, key):
+    """Använder st.text_input för att ta bort pilar och konverterar till float.
+       Återgår till default_value om inmatningen är tom eller ogiltig."""
+    value_str = st.text_input(label, value=str(default_value).replace(',', '.'), key=key)
+    try:
+        return float(value_str.replace(',', '.'))
+    except ValueError:
+        return default_value
+
+def safe_int_input(label, default_value, key):
+    """Använder st.text_input för att ta bort pilar och konverterar till int."""
+    value_str = st.text_input(label, value=str(default_value), key=key)
+    try:
+        return int(float(value_str.replace(',', '.'))) # Använd float mellan för att hantera decimaler vid inmatning
+    except ValueError:
+        return default_value
 
 def create_cashflow_chart(initial_cost, net_annual_flow, title):
     """Genererar den ackumulerade kassaflödesgrafen."""
@@ -51,7 +68,7 @@ st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
 st.title("💰 IoT ROI Kalkylator")
 st.markdown("---")
 
-# --- ÅTERINFÖRD HJÄLP OCH INSTRUKTIONER (WIKI) ---
+# --- INSTRUKTIONER (WIKI) ---
 with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn"):
     st.markdown("""
     Denna kalkylator hjälper dig att uppskatta **Return on Investment (ROI)** för olika IoT-lösningar i fastigheter.
@@ -74,6 +91,7 @@ with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn")
 st.markdown("---")
 
 # --- INITIALISERING AV SESSION STATE ---
+# ... (Behåll initialiseringen från föregående kod) ...
 
 if 'antal_lgh_main' not in st.session_state: st.session_state.antal_lgh_main = 1000
 if 'uh_per_sensor' not in st.session_state: st.session_state.uh_per_sensor = 100
@@ -81,26 +99,26 @@ if 'lora_cost' not in st.session_state: st.session_state.lora_cost = 75
 if 'web_cost' not in st.session_state: st.session_state.web_cost = 50
 if 'app_cost' not in st.session_state: st.session_state.app_cost = 5000
 
-if 'pris_sensor_temp' not in st.session_state: st.session_state.pris_sensor_temp = 688
-if 'pris_install_temp' not in st.session_state: st.session_state.pris_install_temp = 409
-if 'startkostnad_temp' not in st.session_state: st.session_state.startkostnad_temp = 27500
-if 'kvm_snitt' not in st.session_state: st.session_state.kvm_snitt = 67
+if 'pris_sensor_temp' not in st.session_state: st.session_state.pris_sensor_temp = 688.0
+if 'pris_install_temp' not in st.session_state: st.session_state.pris_install_temp = 409.0
+if 'startkostnad_temp' not in st.session_state: st.session_state.startkostnad_temp = 27500.0
+if 'kvm_snitt' not in st.session_state: st.session_state.kvm_snitt = 67.0
 if 'kwh_kvm' not in st.session_state: st.session_state.kwh_kvm = 130.6
 if 'pris_kwh' not in st.session_state: st.session_state.pris_kwh = 1.02
 if 'besparing_temp' not in st.session_state: st.session_state.besparing_temp = 6.0
-if 'uh_besparing_temp' not in st.session_state: st.session_state.uh_besparing_temp = 200
+if 'uh_besparing_temp' not in st.session_state: st.session_state.uh_besparing_temp = 200.0
 
-if 'pris_sensor_imd' not in st.session_state: st.session_state.pris_sensor_imd = 1875
-if 'pris_install_imd' not in st.session_state: st.session_state.pris_install_imd = 459
-if 'besparing_lgh_vatten' not in st.session_state: st.session_state.besparing_lgh_vatten = 500
-if 'besparing_lgh_uh_imd' not in st.session_state: st.session_state.besparing_lgh_uh_imd = 200
+if 'pris_sensor_imd' not in st.session_state: st.session_state.pris_sensor_imd = 1875.0
+if 'pris_install_imd' not in st.session_state: st.session_state.pris_install_imd = 459.0
+if 'besparing_lgh_vatten' not in st.session_state: st.session_state.besparing_lgh_vatten = 500.0
+if 'besparing_lgh_uh_imd' not in st.session_state: st.session_state.besparing_lgh_uh_imd = 200.0
 
 if 'pris_sensor_skada' not in st.session_state: st.session_state.pris_sensor_skada = 714.42
-if 'pris_install_skada' not in st.session_state: st.session_state.pris_install_skada = 523
-if 'kostnad_skada' not in st.session_state: st.session_state.kostnad_skada = 70000
-if 'frekvens_skada' not in st.session_state: st.session_state.frekvens_skada = 50
+if 'pris_install_skada' not in st.session_state: st.session_state.pris_install_skada = 523.0
+if 'kostnad_skada' not in st.session_state: st.session_state.kostnad_skada = 70000.0
+if 'frekvens_skada' not in st.session_state: st.session_state.frekvens_skada = 50.0
 if 'besparing_skada_pct' not in st.session_state: st.session_state.besparing_skada_pct = 60.0
-if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_besparing_skada_lgh = 171
+if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_besparing_skada_lgh = 171.0
 
 
 # --- NAVIGATION OCH SIDEBAR FÖR GEMENSAMMA INDATA ---
@@ -125,15 +143,16 @@ with st.sidebar:
     st.markdown("---")
     st.header("⚙️ Gemensamma Driftskostnader")
     
-    antal_lgh = st.number_input("Antal lägenheter i fastigheten", value=st.session_state.antal_lgh_main, step=10, key='antal_lgh_main')
+    # Använder safe_int_input för att ta bort pilar
+    antal_lgh = safe_int_input("Antal lägenheter i fastigheten", st.session_state.antal_lgh_main, key='antal_lgh_main')
     
     st.subheader("Årliga Kostnader per Sensor/Lgh")
-    underhall_per_sensor = st.number_input("Underhåll/batteri per sensor/år (kr)", value=st.session_state.uh_per_sensor, key='uh_per_sensor')
-    lora_kostnad = st.number_input("LoRaWAN anslutning per sensor/år (kr)", value=st.session_state.lora_cost, key='lora_cost')
-    webiot_kostnad = st.number_input("Plattformskostnad per sensor/år (kr)", value=st.session_state.web_cost, key='web_cost')
+    underhall_per_sensor = safe_float_input("Underhåll/batteri per sensor/år (kr)", st.session_state.uh_per_sensor, key='uh_per_sensor')
+    lora_kostnad = safe_float_input("LoRaWAN anslutning per sensor/år (kr)", st.session_state.lora_cost, key='lora_cost')
+    webiot_kostnad = safe_float_input("Plattformskostnad per sensor/år (kr)", st.session_state.web_cost, key='web_cost')
     
     st.subheader("Fast Årlig Avgfit")
-    applikation_kostnad = st.number_input("Applikationskostnad (fast avgift/år)", value=st.session_state.app_cost, key='app_cost')
+    applikation_kostnad = safe_float_input("Applikationskostnad (fast avgift/år)", st.session_state.app_cost, key='app_cost')
     
     # Total årlig drift (Används i alla kalkyler)
     total_drift_ar_per_sensor = underhall_per_sensor + lora_kostnad + webiot_kostnad
@@ -157,18 +176,7 @@ elif active_tab == "temp":
     st.subheader("Spara/Ladda Scenario (Temperatur)")
     col_save, col_load = st.columns([1, 2])
     
-    with col_load:
-        uploaded_file = st.file_uploader("Ladda Temperatur Scenario (.json)", type="json", key='temp_scenario_uploader')
-        if uploaded_file is not None:
-            try:
-                scenario_data = json.load(uploaded_file)
-                for key, value in scenario_data.items():
-                    if key in st.session_state:
-                        st.session_state[key] = value
-                st.success("Temperatur Scenario laddat! Klicka på 'Beräkna ROI' för att visa de nya resultaten.")
-            except Exception as e:
-                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
-
+    # Spara-knapp
     with col_save:
         scenario_data_to_save = {
             'antal_lgh_main': st.session_state.antal_lgh_main, 'uh_per_sensor': st.session_state.uh_per_sensor,
@@ -188,6 +196,20 @@ elif active_tab == "temp":
             mime="application/json",
             help="Sparar alla aktuella reglagevärden till en fil."
         )
+    
+    # Ladda-knapp (Flyttad under Spara)
+    with col_load:
+        uploaded_file = st.file_uploader("Ladda Temperatur Scenario (.json)", type="json", key='temp_scenario_uploader')
+        if uploaded_file is not None:
+            try:
+                scenario_data = json.load(uploaded_file)
+                for key, value in scenario_data.items():
+                    if key in st.session_state:
+                        st.session_state[key] = value
+                st.success("Temperatur Scenario laddat! Klicka på 'Beräkna ROI' för att visa de nya resultaten.")
+            except Exception as e:
+                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
+
     st.markdown("---")
 
     
@@ -197,21 +219,21 @@ elif active_tab == "temp":
         
         with col1:
             st.subheader("Initial Investering")
-            # Använd session_state som initialt värde för att visa sparade värden vid laddning
-            pris_sensor_temp = st.number_input("Pris per Temp-sensor (kr)", value=st.session_state.pris_sensor_temp, key='pris_sensor_temp_form')
-            pris_install_temp = st.number_input("Installation/Konfig. per sensor (kr)", value=st.session_state.pris_install_temp, key='pris_install_temp_form') 
-            startkostnad_projekt_temp = st.number_input("Projektstartkostnad (kr)", value=st.session_state.startkostnad_temp, key='startkostnad_temp_form')
+            # Använder safe_float/int_input för att ta bort pilar
+            pris_sensor_temp = safe_float_input("Pris per Temp-sensor (kr)", st.session_state.pris_sensor_temp, key='pris_sensor_temp_form')
+            pris_install_temp = safe_float_input("Installation/Konfig. per sensor (kr)", st.session_state.pris_install_temp, key='pris_install_temp_form') 
+            startkostnad_projekt_temp = safe_float_input("Projektstartkostnad (kr)", st.session_state.startkostnad_temp, key='startkostnad_temp_form')
             
             # --- BERÄKNING: INITIAL KOSTNAD ---
             total_initial_temp = antal_lgh * (pris_sensor_temp * 1.01 + pris_install_temp) + startkostnad_projekt_temp 
 
         with col2:
             st.subheader("Besparingsparametrar")
-            kvm_snitt = st.number_input("Snittyta per lgh (kvm)", value=st.session_state.kvm_snitt, key='kvm_snitt_form')
-            energiforbrukning_kvm = st.number_input("Förbrukning (kWh/m²/år)", value=st.session_state.kwh_kvm, key='kwh_kvm_form')
-            energipris = st.number_input("Energipris (kr/kWh)", value=st.session_state.pris_kwh, key='pris_kwh_form')
+            kvm_snitt = safe_float_input("Snittyta per lgh (kvm)", st.session_state.kvm_snitt, key='kvm_snitt_form')
+            energiforbrukning_kvm = safe_float_input("Förbrukning (kWh/m²/år)", st.session_state.kwh_kvm, key='kwh_kvm_form')
+            energipris = safe_float_input("Energipris (kr/kWh)", st.session_state.pris_kwh, key='pris_kwh_form')
             besparing_procent = st.slider("Förväntad energibesparing (%)", 0.0, 15.0, value=st.session_state.besparing_temp, step=0.1, key='besparing_temp_form')
-            underhall_besparing_lgh = st.number_input("Minskat underhåll/lgh (kr/år)", value=st.session_state.uh_besparing_temp, key='uh_besparing_temp_form')
+            underhall_besparing_lgh = safe_float_input("Minskat underhåll/lgh (kr/år)", st.session_state.uh_besparing_temp, key='uh_besparing_temp_form')
             
             # --- BERÄKNING: NETTO/BESPARING ---
             total_kwh_fastighet = antal_lgh * kvm_snitt * energiforbrukning_kvm
@@ -248,18 +270,6 @@ elif active_tab == "imd":
     st.subheader("Spara/Ladda Scenario (IMD)")
     col_save, col_load = st.columns([1, 2])
     
-    with col_load:
-        uploaded_file = st.file_uploader("Ladda IMD Scenario (.json)", type="json", key='imd_scenario_uploader') 
-        if uploaded_file is not None:
-            try:
-                scenario_data = json.load(uploaded_file)
-                for key, value in scenario_data.items():
-                    if key in st.session_state:
-                        st.session_state[key] = value
-                st.success("IMD Scenario laddat! Klicka på 'Beräkna ROI' för att visa de nya resultaten.")
-            except Exception as e:
-                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
-
     with col_save:
         scenario_data_to_save = {
             'antal_lgh_main': st.session_state.antal_lgh_main, 'uh_per_sensor': st.session_state.uh_per_sensor,
@@ -277,6 +287,19 @@ elif active_tab == "imd":
             mime="application/json",
             help="Sparar alla aktuella reglagevärden till en fil."
         )
+    
+    with col_load:
+        uploaded_file = st.file_uploader("Ladda IMD Scenario (.json)", type="json", key='imd_scenario_uploader') 
+        if uploaded_file is not None:
+            try:
+                scenario_data = json.load(uploaded_file)
+                for key, value in scenario_data.items():
+                    if key in st.session_state:
+                        st.session_state[key] = value
+                st.success("IMD Scenario laddat! Klicka på 'Beräkna ROI' för att visa de nya resultaten.")
+            except Exception as e:
+                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
+
     st.markdown("---")
 
     with st.form(key='imd_form'):
@@ -284,15 +307,15 @@ elif active_tab == "imd":
         
         with col3:
             st.subheader("Initial Investering (IMD-mätare)")
-            pris_sensor_imd = st.number_input("Pris per Vattenmätare/Sensor (kr)", value=st.session_state.pris_sensor_imd, key='pris_sensor_imd_form')
-            pris_install_imd = st.number_input("Installation/Konfig per mätare (kr)", value=st.session_state.pris_install_imd, key='pris_install_imd_form') 
+            pris_sensor_imd = safe_float_input("Pris per Vattenmätare/Sensor (kr)", st.session_state.pris_sensor_imd, key='pris_sensor_imd_form')
+            pris_install_imd = safe_float_input("Installation/Konfig per mätare (kr)", st.session_state.pris_install_imd, key='pris_install_imd_form') 
             
             total_initial_imd = antal_lgh * (pris_sensor_imd + pris_install_imd) + (5 * pris_sensor_imd) 
             
         with col4:
             st.subheader("Besparingsparametrar (Förbrukning)")
-            besparing_per_lgh_vatten = st.number_input("Vatten/Varmvatten-besparing per lgh/år (kr)", value=st.session_state.besparing_lgh_vatten, key='besparing_lgh_vatten_form')
-            besparing_per_lgh_underhall = st.number_input("Minskat underhåll/lgh (kr/år)", value=st.session_state.besparing_lgh_uh_imd, key='besparing_lgh_uh_imd_form')
+            besparing_per_lgh_vatten = safe_float_input("Vatten/Varmvatten-besparing per lgh/år (kr)", st.session_state.besparing_lgh_vatten, key='besparing_lgh_vatten_form')
+            besparing_per_lgh_underhall = safe_float_input("Minskat underhåll/lgh (kr/år)", st.session_state.besparing_lgh_uh_imd, key='besparing_lgh_uh_imd_form')
             
             total_besparing_imd = antal_lgh * (besparing_per_lgh_vatten + besparing_per_lgh_underhall)
             netto_imd = total_besparing_imd - total_drift_ar
@@ -318,18 +341,6 @@ elif active_tab == "skada":
     st.subheader("Spara/Ladda Scenario (Vattenskada)")
     col_save, col_load = st.columns([1, 2])
     
-    with col_load:
-        uploaded_file = st.file_uploader("Ladda Vattenskada Scenario (.json)", type="json", key='skada_scenario_uploader') 
-        if uploaded_file is not None:
-            try:
-                scenario_data = json.load(uploaded_file)
-                for key, value in scenario_data.items():
-                    if key in st.session_state:
-                        st.session_state[key] = value
-                st.success("Vattenskada Scenario laddat! Klicka på 'Beräkna ROI' för att visa de nya resultaten.")
-            except Exception as e:
-                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
-
     with col_save:
         scenario_data_to_save = {
             'antal_lgh_main': st.session_state.antal_lgh_main, 'uh_per_sensor': st.session_state.uh_per_sensor,
@@ -348,6 +359,19 @@ elif active_tab == "skada":
             mime="application/json",
             help="Sparar alla aktuella reglagevärden till en fil."
         )
+    
+    with col_load:
+        uploaded_file = st.file_uploader("Ladda Vattenskada Scenario (.json)", type="json", key='skada_scenario_uploader') 
+        if uploaded_file is not None:
+            try:
+                scenario_data = json.load(uploaded_file)
+                for key, value in scenario_data.items():
+                    if key in st.session_state:
+                        st.session_state[key] = value
+                st.success("Vattenskada Scenario laddat! Klicka på 'Beräkna ROI' för att visa de nya resultaten.")
+            except Exception as e:
+                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
+
     st.markdown("---")
     
     with st.form(key='skada_form'):
@@ -355,17 +379,17 @@ elif active_tab == "skada":
 
         with col5:
             st.subheader("Initial Investering (Läckagesensor)")
-            pris_sensor_skada = st.number_input("Pris per Läckagesensor (kr)", value=st.session_state.pris_sensor_skada, key='pris_sensor_skada_form')
-            pris_install_skada = st.number_input("Installation/Konfig per sensor (kr)", value=st.session_state.pris_install_skada, key='pris_install_skada_form') 
+            pris_sensor_skada = safe_float_input("Pris per Läckagesensor (kr)", st.session_state.pris_sensor_skada, key='pris_sensor_skada_form')
+            pris_install_skada = safe_float_input("Installation/Konfig per sensor (kr)", st.session_state.pris_install_skada, key='pris_install_skada_form') 
             
             total_initial_skada = antal_lgh * (pris_sensor_skada + pris_install_skada)
             
         with col6:
             st.subheader("Besparingsparametrar (Skadereduktion)")
-            kostnad_vattenskada = st.number_input("Snittkostnad per vattenskada (kr)", value=st.session_state.kostnad_skada, key='kostnad_skada_form')
-            frekvens_vattenskada = st.number_input("Antal vattenskador per 1000 lgh/år (Utan IoT)", value=st.session_state.frekvens_skada, key='frekvens_skada_form')
+            kostnad_vattenskada = safe_float_input("Snittkostnad per vattenskada (kr)", st.session_state.kostnad_skada, key='kostnad_skada_form')
+            frekvens_vattenskada = safe_float_input("Antal vattenskador per 1000 lgh/år (Utan IoT)", st.session_state.frekvens_skada, key='frekvens_skada_form')
             besparing_procent_skador = st.slider("Förväntad Minskning av Skadekostnad (%)", 0.0, 90.0, value=st.session_state.besparing_skada_pct, step=5.0, key='besparing_skada_pct_form')
-            uh_besparing_skada_lgh = st.number_input("Övrig underhållsbesparing per lgh/år (kr)", value=st.session_state.uh_besparing_skada_lgh, key='uh_besparing_skada_lgh_form')
+            uh_besparing_skada_lgh = safe_float_input("Övrig underhållsbesparing per lgh/år (kr)", st.session_state.uh_besparing_skada_lgh, key='uh_besparing_skada_lgh_form')
             
             tot_skadekostnad_utan_iot = (antal_lgh / 1000) * (frekvens_vattenskada * kostnad_vattenskada)
             besparing_skador_kr = tot_skadekostnad_utan_iot * (besparing_procent_skador / 100)
