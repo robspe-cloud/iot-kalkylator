@@ -57,8 +57,8 @@ def display_kpis_4_temp(initial, netto, payback, besparing_lgh_ar):
     col1_kpi.metric("Total Investering", f"{initial:,.0f} kr".replace(",", " "))
     col2_kpi.metric("Årlig Nettobesparing", f"{netto:,.0f} kr".replace(",", " "), delta_color="normal")
     
-    # NY KPI: Besparing per lägenhet och år
-    col3_kpi.metric("Besparing/Lgh/år", f"{besparing_lgh_ar:,.0f} kr".replace(",", " "), delta_color="normal")
+    # KORRIGERAD RUBRIK: För att förtydliga att detta är Brutto Energibesparing
+    col3_kpi.metric("Energibesparing/Lgh/år", f"{besparing_lgh_ar:,.0f} kr".replace(",", " "), delta_color="normal")
 
     col4_kpi.metric("Payback-tid", f"{payback:.1f} år" if payback > 0 else "N/A")
 
@@ -165,7 +165,7 @@ if active_tab == "":
     st.info("👋 Välkommen! Vänligen välj en kalkyl i sidofältet till vänster (t.ex. '🌡️ Temperatur & Energi') för att börja beräkna ROI.")
     st.snow() 
 
-# --- FLIK 1: TEMPERATUR & ENERGI (Text OVANFÖR boxen, litet typsnitt) ---
+# --- FLIK 1: TEMPERATUR & ENERGI (Kompakt Layout & 536 kr beräkning) ---
 elif active_tab == "temp":
     st.header("Temperatur- och Energikalkyl")
     st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
@@ -195,10 +195,10 @@ elif active_tab == "temp":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
     
-    # 2. Ladda-knapp (Höger kolumn - Text OVANFÖR, ÄNDRAD FRÅN ###)
+    # 2. Ladda-knapp (Höger kolumn - Kompakt Layout)
     with col_load:
-        # KORRIGERAT: Endast st.markdown (mindre typsnitt)
-        st.markdown("Ladda Temperatur Scenario (.json)")
+        # KORRIGERAT: st.caption för kompakt layout och minimerat mellanrum
+        st.caption("Ladda Temperatur Scenario (.json)")
         
         # VIKTIGT: Tom etikett för att dölja Streamlits standardetikett 
         uploaded_file = st.file_uploader(label="", type="json", key='temp_scenario_uploader') 
@@ -240,15 +240,23 @@ elif active_tab == "temp":
             
             # --- BERÄKNING: NETTO/BESPARING ---
             total_kwh_fastighet = antal_lgh * kvm_snitt * energiforbrukning_kvm
+            
+            # 1. Total Energibesparing (Rått värde)
             besparing_energi_kr = total_kwh_fastighet * energipris * (besparing_procent / 100)
+            
+            # 2. Total Underhållsbesparing
             besparing_underhall_kr = antal_lgh * underhall_besparing_lgh
             
+            # Total Bruttobesparing (Energibesparing + Underhållsbesparing)
             total_besparing_temp = besparing_energi_kr + besparing_underhall_kr
+            
+            # Nettoresultat (Total Bruttobesparing minus Total Driftkostnad)
             netto_temp = total_besparing_temp - total_drift_ar
             payback_temp = total_initial_temp / netto_temp if netto_temp > 0 else 0
             
-            # NY KPI-BERÄKNING: Besparing per Lägenhet och År
-            besparing_lgh_ar = netto_temp / antal_lgh if antal_lgh > 0 else 0
+            # KORRIGERAD BERÄKNING för Besparing/Lgh/år: ENDAST ENERGIBESPARING
+            # Detta matchar beräkningen i din Excel: 67*130.6*(1.02/100)*(6/100) = 536.00 kr
+            besparing_lgh_ar = (kvm_snitt * energiforbrukning_kvm * energipris * (besparing_procent / 100)) 
 
 
         
@@ -265,13 +273,12 @@ elif active_tab == "temp":
             st.session_state.uh_besparing_temp = underhall_besparing_lgh
 
     # --- RESULTAT DISPLAY (Utanför Form) ---
-    # ANVÄND display_kpis_4_temp
     display_kpis_4_temp(total_initial_temp, netto_temp, payback_temp, besparing_lgh_ar)
     
     fig_temp, _ = create_cashflow_chart(total_initial_temp, netto_temp, "Ackumulerat Kassaflöde (Temperatur)")
     st.plotly_chart(fig_temp, use_container_width=True)
 
-# --- FLIK 2: IMD: VATTENFÖRBRUKNING (Text OVANFÖR boxen, litet typsnitt) ---
+# --- FLIK 2: IMD: VATTENFÖRBRUKNING (Kompakt Layout) ---
 elif active_tab == "imd":
     st.header("IMD: Vattenförbrukningskalkyl")
     st.markdown("Fokus: Minska vatten- och varmvattenförbrukning genom individuell mätning och debitering (IMD), t.ex. Quandify.")
@@ -299,10 +306,10 @@ elif active_tab == "imd":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
     
-    # 2. Ladda-knapp (Höger kolumn - Text OVANFÖR, ÄNDRAD FRÅN ###)
+    # 2. Ladda-knapp (Höger kolumn - Kompakt Layout)
     with col_load:
-        # KORRIGERAT: Endast st.markdown (mindre typsnitt)
-        st.markdown("Ladda IMD Scenario (.json)")
+        # KORRIGERAT: st.caption för kompakt layout och minimerat mellanrum
+        st.caption("Ladda IMD Scenario (.json)")
         
         uploaded_file = st.file_uploader(label="", type="json", key='imd_scenario_uploader') 
 
@@ -348,7 +355,7 @@ elif active_tab == "imd":
     fig_imd, _ = create_cashflow_chart(total_initial_imd, netto_imd, "Ackumulerat Kassaflöde (IMD Vatten)")
     st.plotly_chart(fig_imd, use_container_width=True)
 
-# --- FLIK 3: VATTENSKADESKYDD (Text OVANFÖR boxen, litet typsnitt) ---
+# --- FLIK 3: VATTENSKADESKYDD (Kompakt Layout) ---
 elif active_tab == "skada":
     st.header("Vattenskadeskyddskalkyl")
     st.markdown("Fokus: Undvika kostsamma vattenskador genom tidig upptäckt av läckagesensorer, t.ex. Elsys.")
@@ -377,10 +384,10 @@ elif active_tab == "skada":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
         
-    # 2. Ladda-knapp (Höger kolumn - Text OVANFÖR, ÄNDRAD FRÅN ###)
+    # 2. Ladda-knapp (Höger kolumn - Kompakt Layout)
     with col_load:
-        # KORRIGERAT: Endast st.markdown (mindre typsnitt)
-        st.markdown("Ladda Vattenskada Scenario (.json)")
+        # KORRIGERAT: st.caption för kompakt layout och minimerat mellanrum
+        st.caption("Ladda Vattenskada Scenario (.json)")
         
         uploaded_file = st.file_uploader(label="", type="json", key='skada_scenario_uploader') 
 
