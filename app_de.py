@@ -3,18 +3,18 @@ import pandas as pd
 import plotly.graph_objects as go
 import json
 
-# --- KONSTANTER OCH MAPPNING ---
+# --- KONSTANTER OCH MAPPNING (DEUTSCH) ---
 CALC_OPTIONS = {
-    "🌡️ Temperatur & Energi": "temp", 
-    "💧 IMD: Vattenförbrukning": "imd", 
-    "🚨 Vattenskadeskydd": "skada"
+    "🌡️ Temperatur & Energie": "temp", 
+    "💧 IMD: Wasserverbrauch": "imd", 
+    "🚨 Wasserschadenschutz": "skada"
 }
 CALC_KEY_LIST = list(CALC_OPTIONS.values()) 
 
-# --- FUNKTIONER FÖR BERÄKNINGAR OCH VISUALISERING ---
+# --- FUNKTIONEN FÜR BERECHNUNGEN UND VISUALISIERUNG ---
 
 def create_cashflow_chart(initial_cost, net_annual_flow, title):
-    """Genererar den ackumulerade kassaflödesgrafen."""
+    """Generiert das kumulierte Cashflow-Diagramm."""
     years = list(range(1, 11))
     cashflow = []
     current_balance = -initial_cost
@@ -27,64 +27,64 @@ def create_cashflow_chart(initial_cost, net_annual_flow, title):
     fig.add_trace(go.Bar(
         x=years,
         y=cashflow,
-        name="Ackumulerat Resultat",
+        name="Kumuliertes Ergebnis",
         marker_color=['#ef553b' if x < 0 else '#00cc96' for x in cashflow]
     ))
-    fig.update_layout(title=title, xaxis_title="År", yaxis_title="SEK", template="plotly_white")
+    fig.update_layout(title=title, xaxis_title="Jahr", yaxis_title="SEK", template="plotly_white")
     return fig, cashflow
 
 def display_kpis(initial, netto, payback):
-    """Visar de tre nyckeltalen."""
+    """Zeigt die drei Schlüsselkennzahlen (KPIs) an."""
     col1_kpi, col2_kpi, col3_kpi = st.columns(3)
     initial = initial if initial is not None and initial >= 0 else 0
     netto = netto if netto is not None else 0
     payback = payback if payback is not None and payback >= 0 else 0
 
-    col1_kpi.metric("Total Investering", f"{initial:,.0f} kr".replace(",", " "))
-    col2_kpi.metric("Årlig Nettobesparing", f"{netto:,.0f} kr".replace(",", " "), delta_color="normal")
-    col3_kpi.metric("Payback-tid", f"{payback:.1f} år" if payback > 0 else "N/A")
+    col1_kpi.metric("Gesamtinvestition", f"{initial:,.0f} SEK".replace(",", " "))
+    col2_kpi.metric("Jährliche Nettoeinsparung", f"{netto:,.0f} SEK".replace(",", " "), delta_color="normal")
+    col3_kpi.metric("Amortisationszeit", f"{payback:.1f} Jahre" if payback > 0 else "N/A")
 
-# --- HUVUDAPPLIKATION ---
+# --- HAUPTAPPLIKATION ---
 
-st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
+st.set_page_config(page_title="IoT ROI Rechner", layout="wide")
 
-st.title("💰 IoT ROI Kalkylator")
+st.title("💰 IoT ROI Rechner")
 st.markdown("---")
 
-# --- HJÄLP OCH INSTRUKTIONER (WIKI) ---
-with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn"):
+# --- ANLEITUNG & WIKI ---
+with st.expander("ℹ️ Anleitung & Wiki – So verwenden Sie den Rechner"):
     st.markdown("""
-    Denna kalkylator hjälper dig att uppskatta **Return on Investment (ROI)** för olika IoT-lösningar i fastigheter.
+    Dieser Rechner hilft Ihnen, die **Rentabilität (Return on Investment, ROI)** für verschiedene IoT-Lösungen in Immobilien abzuschätzen.
 
-    ### 1. Välj Kalkyl
-    Använd sidofältet till vänster (`🔎 Välj Kalkyl`) för att växla mellan de tre analysområdena: **Temperatur & Energi**, **IMD Vattenförbrukning**, och **Vattenskadeskydd**.
+    ### 1. Kalkulation wählen
+    Verwenden Sie die Seitenleiste links (`🔎 Kalkulation wählen`), um zwischen den drei Analysebereichen zu wechseln: **Temperatur & Energie**, **IMD Wasserverbrauch** und **Wasserschadenschutz**.
 
-    ### 2. Gemensamma Kostnader (Sidebar)
-    * Fälten i sidofältet (`⚙️ Gemensamma Driftskostnader`) – som Antal lägenheter, underhållskostnader och fasta årliga avgifter – påverkar **alla tre** kalkylerna. Justera dem först.
+    ### 2. Allgemeine Kosten (Seitenleiste)
+    * Die Felder in der Seitenleiste (`⚙️ Allgemeine Betriebskosten`) – wie Anzahl der Wohnungen, Wartungskosten und jährliche Festgebühren – wirken sich auf **alle drei** Kalkulationen aus. Passen Sie diese zuerst an.
 
-    ### 3. Justera Scenariot
-    * I huvudfönstret för din valda kalkyl justerar du de **unika parametrarna** (t.ex. sensorpriser, installationskostnader och besparingsprocenter) för just det scenariot.
-    * Resultatet (KPI:er och kassaflödesgrafen) uppdateras omedelbart.
+    ### 3. Das Szenario anpassen
+    * Im Hauptfenster für Ihre ausgewählte Kalkulation passen Sie die **individuellen Parameter** (z. B. Sensorpreise, Installationskosten und Einsparprozentsätze) für dieses spezifische Szenario an.
+    * Das Ergebnis (KPIs und Cashflow-Diagramm) wird sofort aktualisiert.
 
-    ### 4. Spara och Ladda Scenarier (Dela Varianter)
-    Du kan spara dina exakta parameterinställningar för senare användning, arkivering eller jämförelser.
-    * **Spara:** Klicka på **"Spara [Kalkylnamn] Scenario (.json)"** för att ladda ner en JSON-fil med alla aktuella inställningar för den aktiva kalkylen.
-    * **Ladda:** Använd **"Ladda [Kalkylnamn] Scenario (.json)"** och välj en tidigare sparad fil. **Obs:** Efter laddning kan du behöva klicka på kalkylen i sidofältet en gång till för att se alla reglage uppdateras.
+    ### 4. Szenarien speichern und laden (Varianten teilen)
+    Sie können Ihre exakten Parametereinstellungen speichern, um sie später zu verwenden, zu archivieren oder zu vergleichen.
+    * **Speichern:** Klicken Sie auf **"Speichern [Kalkulationsname] Szenario (.json)"**, um eine JSON-Datei mit allen aktuellen Einstellungen für die aktive Kalkulation herunterzuladen.
+    * **Laden:** Verwenden Sie **"Laden [Kalkulationsname] Szenario (.json)"** und wählen Sie eine zuvor gespeicherte Datei aus. **Hinweis:** Nach dem Laden müssen Sie möglicherweise einmal auf die Kalkulation in der Seitenleiste klicken, um alle Regler aktualisiert zu sehen.
     
-    **OBS: Stöd för länkdelning/URL-parametrar är borttaget i denna version för ökad stabilitet.**
+    **HINWEIS: Die Unterstützung für Link-Sharing/URL-Parameter wurde in dieser Version zugunsten der Stabilität entfernt.**
     """)
 st.markdown("---")
 
-# --- INITIALISERING AV SESSION STATE (Input-värden) ---
+# --- INITIALISIERUNG DES SESSION STATE (Eingabewerte) ---
 
-# Gemensamma Indata
+# Gemeinsame Eingaben (Variablennamen bleiben Schwedisch, da sie nicht angezeigt werden)
 if 'antal_lgh_main' not in st.session_state: st.session_state.antal_lgh_main = 1000
 if 'uh_per_sensor' not in st.session_state: st.session_state.uh_per_sensor = 100
 if 'lora_cost' not in st.session_state: st.session_state.lora_cost = 75
 if 'web_cost' not in st.session_state: st.session_state.web_cost = 50
 if 'app_cost' not in st.session_state: st.session_state.app_cost = 5000
 
-# Flik 1: Temperatur & Energi
+# Flik 1: Temperatur & Energie
 if 'pris_sensor_temp' not in st.session_state: st.session_state.pris_sensor_temp = 688
 if 'pris_install_temp' not in st.session_state: st.session_state.pris_install_temp = 409
 if 'startkostnad_temp' not in st.session_state: st.session_state.startkostnad_temp = 27500
@@ -109,79 +109,78 @@ if 'besparing_skada_pct' not in st.session_state: st.session_state.besparing_ska
 if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_besparing_skada_lgh = 171
 
 
-# --- NAVIGATION OCH SIDEBAR FÖR GEMENSAMMA INDATA ---
+# --- NAVIGATION UND SEITENLEISTE FÜR ALLGEMEINE EINGABEN ---
 
 with st.sidebar:
-    st.header("🔎 Välj Kalkyl")
+    st.header("🔎 Kalkulation wählen")
     
-    # ENKEL OCH STABIL NAVIGATION MED st.radio
-    # Lägger till ett tomt standardalternativ (index=0)
-    display_options = ["— Välj en kalkyl —"] + list(CALC_OPTIONS.keys())
+    # EINFACHE UND STABILE NAVIGATION MIT st.radio
+    display_options = ["— Wählen Sie eine Kalkulation —"] + list(CALC_OPTIONS.keys())
     
     selected_calc_name = st.radio(
-        "Välj det område du vill analysera:", 
+        "Wählen Sie den Bereich, den Sie analysieren möchten:", 
         options=display_options,
-        index=0, # Starta på det tomma alternativet
+        index=0, # Startet auf der leeren Option
         key='radio_calc_selection'
     )
     
-    # Bestäm aktiv flik baserat på valet
-    if selected_calc_name == "— Välj en kalkyl —":
-        active_tab = "" # Tom sträng betyder välkomstmeddelande
+    # Bestimmt den aktiven Tab basierend auf der Auswahl
+    if selected_calc_name == "— Wählen Sie eine Kalkulation —":
+        active_tab = "" # Leerer String bedeutet Willkommensnachricht
     else:
         active_tab = CALC_OPTIONS[selected_calc_name]
     
     st.markdown("---")
-    st.header("⚙️ Gemensamma Driftskostnader")
+    st.header("⚙️ Allgemeine Betriebskosten")
     
-    # ... Sidebar inputs ...
-    antal_lgh = st.number_input("Antal lägenheter i fastigheten", value=st.session_state.antal_lgh_main, step=10, key='antal_lgh_main')
+    # ... Sidebar-Eingaben ...
+    antal_lgh = st.number_input("Anzahl der Wohnungen in der Immobilie", value=st.session_state.antal_lgh_main, step=10, key='antal_lgh_main')
     
-    st.subheader("Årliga Kostnader per Sensor/Lgh")
-    underhall_per_sensor = st.number_input("Underhåll/batteri per sensor/år (kr)", value=st.session_state.uh_per_sensor, key='uh_per_sensor')
-    lora_kostnad = st.number_input("LoRaWAN anslutning per sensor/år (kr)", value=st.session_state.lora_cost, key='lora_cost')
-    webiot_kostnad = st.number_input("Plattformskostnad per sensor/år (kr)", value=st.session_state.web_cost, key='web_cost')
+    st.subheader("Jährliche Kosten pro Sensor/Wohnung")
+    underhall_per_sensor = st.number_input("Wartung/Batterie pro Sensor/Jahr (SEK)", value=st.session_state.uh_per_sensor, key='uh_per_sensor')
+    lora_kostnad = st.number_input("LoRaWAN-Anschluss pro Sensor/Jahr (SEK)", value=st.session_state.lora_cost, key='lora_cost')
+    webiot_kostnad = st.number_input("Plattformskosten pro Sensor/Jahr (SEK)", value=st.session_state.web_cost, key='web_cost')
     
-    st.subheader("Fast Årlig Avgfit")
-    applikation_kostnad = st.number_input("Applikationskostnad (fast avgift/år)", value=st.session_state.app_cost, key='app_cost')
+    st.subheader("Jahres-Festgebühr")
+    applikation_kostnad = st.number_input("Anwendungskosten (feste Gebühr/Jahr)", value=st.session_state.app_cost, key='app_cost')
     
-    # Total årlig drift (Används i alla kalkyler)
+    # Gesamte jährliche Betriebskosten (wird in allen Kalkulationen verwendet)
     total_drift_ar_per_sensor = underhall_per_sensor + lora_kostnad + webiot_kostnad
     total_drift_ar = (antal_lgh * total_drift_ar_per_sensor) + applikation_kostnad
 
 
-# --- 2. INNEHÅLLSBLOCK STYRS AV active_tab ---
+# --- 2. INHALTSBLÖCKE GESTEUERT DURCH active_tab ---
 
-# --- VÄLKOMSTSKÄRM (Nytt startläge) ---
+# --- WILLKOMMENSBILDSCHIRM (Neuer Startmodus) ---
 if active_tab == "":
-    st.info("👋 Välkommen! Vänligen välj en kalkyl i sidofältet till vänster (t.ex. '🌡️ Temperatur & Energi') för att börja beräkna ROI.")
-    st.snow() # Liten visuell touch på startsidan
+    st.info("👋 Willkommen! Bitte wählen Sie links in der Seitenleiste eine Kalkulation (z.B. '🌡️ Temperatur & Energie'), um mit der Berechnung des ROI zu beginnen.")
+    st.snow() # Effekt: Schnee/Konfetti
 
-# --- FLIK 1: TEMPERATUR & ENERGI ---
+# --- KALKULATION 1: TEMPERATUR & ENERGIE ---
 elif active_tab == "temp":
-    st.header("Temperatur- och Energikalkyl")
-    st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
+    st.header("Temperatur- und Energiekalkulation")
+    st.markdown("Fokus: Angepasste Wärmeverteilung, reduzierter Wartungsaufwand, optimierte Energie.")
     st.markdown("---")
 
-    # --- FUNKTIONER FÖR SPARA/LADDA SCENARIO (TEMPERATUR) ---
-    st.subheader("Spara/Ladda Scenario (Temperatur)")
+    # --- FUNKTIONEN FÜR SPEICHERN/LADEN SZENARIO (TEMPERATUR) ---
+    st.subheader("Szenario speichern/laden (Temperatur)")
     col_save, col_load = st.columns([1, 2])
     
-    # 1. Ladda Scenario
+    # 1. Szenario laden
     with col_load:
-        uploaded_file = st.file_uploader("Ladda Temperatur Scenario (.json)", type="json", key='temp_scenario_uploader')
+        uploaded_file = st.file_uploader("Temperatur Szenario laden (.json)", type="json", key='temp_scenario_uploader')
         if uploaded_file is not None:
             try:
                 scenario_data = json.load(uploaded_file)
                 for key, value in scenario_data.items():
                     if key in st.session_state:
                         st.session_state[key] = value
-                st.success("Temperatur Scenario laddat! Sidan laddas om för att visa de uppdaterade värdena.")
+                st.success("Temperatur Szenario geladen! Die Seite wird neu geladen, um die aktualisierten Werte anzuzeigen.")
                 st.experimental_rerun()
             except Exception as e:
-                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
+                st.error(f"Die Datei konnte nicht geladen werden. Überprüfen Sie das Format: {e}")
 
-    # 2. Spara Scenario
+    # 2. Szenario speichern
     with col_save:
         scenario_data_to_save = {
             'antal_lgh_main': st.session_state.antal_lgh_main, 'uh_per_sensor': st.session_state.uh_per_sensor,
@@ -195,31 +194,31 @@ elif active_tab == "temp":
         json_data = json.dumps(scenario_data_to_save, indent=4)
         
         st.download_button(
-            label="Spara Temperatur Scenario (.json)",
+            label="Speichern Temperatur Szenario (.json)",
             data=json_data,
             file_name="iot_temp_scenario.json",
             mime="application/json",
-            help="Sparar alla aktuella reglagevärden till en fil."
+            help="Speichert alle aktuellen Reglerwerte in einer Datei."
         )
     st.markdown("---")
     
-    # --- FLIK 1 INPUTS ---
+    # --- KALKULATION 1 EINGABEN ---
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("Initial Investering")
-        pris_sensor_temp = st.number_input("Pris per Temp-sensor (kr)", value=st.session_state.pris_sensor_temp, key='pris_sensor_temp')
-        pris_install_temp = st.number_input("Installation/Konfig. per sensor (kr)", value=st.session_state.pris_install_temp, key='pris_install_temp') 
-        startkostnad_projekt_temp = st.number_input("Projektstartkostnad (kr)", value=st.session_state.startkostnad_temp, key='startkostnad_temp')
-        total_initial_temp = antal_lgh * (pris_sensor_temp * 1.01 + pris_install_temp) + startkostnad_projekt_temp # 1% reserv
+        st.subheader("Anfangsinvestition")
+        pris_sensor_temp = st.number_input("Preis pro Temp-Sensor (SEK)", value=st.session_state.pris_sensor_temp, key='pris_sensor_temp')
+        pris_install_temp = st.number_input("Installation/Konfig. pro Sensor (SEK)", value=st.session_state.pris_install_temp, key='pris_install_temp') 
+        startkostnad_projekt_temp = st.number_input("Projektstartkosten (SEK)", value=st.session_state.startkostnad_temp, key='startkostnad_temp')
+        total_initial_temp = antal_lgh * (pris_sensor_temp * 1.01 + pris_install_temp) + startkostnad_projekt_temp # 1% Reserve
 
     with col2:
-        st.subheader("Besparingsparametrar")
-        kvm_snitt = st.number_input("Snittyta per lgh (kvm)", value=st.session_state.kvm_snitt, key='kvm_snitt')
-        energiforbrukning_kvm = st.number_input("Förbrukning (kWh/m²/år)", value=st.session_state.kwh_kvm, key='kwh_kvm')
-        energipris = st.number_input("Energipris (kr/kWh)", value=st.session_state.pris_kwh, key='pris_kwh')
-        besparing_procent = st.slider("Förväntad energibesparing (%)", 0.0, 15.0, value=st.session_state.besparing_temp, step=0.1, key='besparing_temp')
-        underhall_besparing_lgh = st.number_input("Minskat underhåll/lgh (kr/år)", value=st.session_state.uh_besparing_temp, key='uh_besparing_temp')
+        st.subheader("Einsparparameter")
+        kvm_snitt = st.number_input("Durchschnittliche Fläche pro Wohnung (qm)", value=st.session_state.kvm_snitt, key='kvm_snitt')
+        energiforbrukning_kvm = st.number_input("Verbrauch (kWh/m²/Jahr)", value=st.session_state.kwh_kvm, key='kwh_kvm')
+        energipris = st.number_input("Energiepreis (SEK/kWh)", value=st.session_state.pris_kwh, key='pris_kwh')
+        besparing_procent = st.slider("Erwartete Energieeinsparung (%)", 0.0, 15.0, value=st.session_state.besparing_temp, step=0.1, key='besparing_temp')
+        underhall_besparing_lgh = st.number_input("Reduzierte Wartung/Wohnung (SEK/Jahr)", value=st.session_state.uh_besparing_temp, key='uh_besparing_temp')
         
         total_kwh_fastighet = antal_lgh * kvm_snitt * energiforbrukning_kvm
         besparing_energi_kr = total_kwh_fastighet * energipris * (besparing_procent / 100)
@@ -229,34 +228,34 @@ elif active_tab == "temp":
         payback_temp = total_initial_temp / netto_temp if netto_temp > 0 else 0
 
     display_kpis(total_initial_temp, netto_temp, payback_temp)
-    fig_temp, _ = create_cashflow_chart(total_initial_temp, netto_temp, "Ackumulerat Kassaflöde (Temperatur)")
+    fig_temp, _ = create_cashflow_chart(total_initial_temp, netto_temp, "Kumulierter Cashflow (Temperatur)")
     st.plotly_chart(fig_temp, use_container_width=True)
 
-# --- FLIK 2: IMD: VATTENFÖRBRUKNING ---
+# --- KALKULATION 2: IMD: WASSERVERBRAUCH ---
 elif active_tab == "imd":
-    st.header("IMD: Vattenförbrukningskalkyl")
-    st.markdown("Fokus: Minska vatten- och varmvattenförbrukning genom individuell mätning och debitering (IMD), t.ex. Quandify.")
+    st.header("IMD: Wasserverbrauchskalkulation")
+    st.markdown("Fokus: Reduzierung des Wasser- und Warmwasserverbrauchs durch individuelle Messung und Abrechnung (IMD), z.B. Quandify.")
     st.markdown("---")
     
-    # --- FUNKTIONER FÖR SPARA/LADDA SCENARIO (IMD) ---
-    st.subheader("Spara/Ladda Scenario (IMD)")
+    # --- FUNKTIONEN FÜR SPEICHERN/LADEN SZENARIO (IMD) ---
+    st.subheader("Szenario speichern/laden (IMD)")
     col_save, col_load = st.columns([1, 2])
     
-    # 1. Ladda Scenario
+    # 1. Szenario laden
     with col_load:
-        uploaded_file = st.file_uploader("Ladda IMD Scenario (.json)", type="json", key='imd_scenario_uploader') 
+        uploaded_file = st.file_uploader("IMD Szenario laden (.json)", type="json", key='imd_scenario_uploader') 
         if uploaded_file is not None:
             try:
                 scenario_data = json.load(uploaded_file)
                 for key, value in scenario_data.items():
                     if key in st.session_state:
                         st.session_state[key] = value
-                st.success("IMD Scenario laddat! Sidan laddas om för att visa de uppdaterade värdena.")
+                st.success("IMD Szenario geladen! Die Seite wird neu geladen, um die aktualisierten Werte anzuzeigen.")
                 st.experimental_rerun()
             except Exception as e:
-                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
+                st.error(f"Die Datei konnte nicht geladen werden. Überprüfen Sie das Format: {e}")
 
-    # 2. Spara Scenario
+    # 2. Szenario speichern
     with col_save:
         scenario_data_to_save = {
             'antal_lgh_main': st.session_state.antal_lgh_main, 'uh_per_sensor': st.session_state.uh_per_sensor,
@@ -268,60 +267,60 @@ elif active_tab == "imd":
         json_data = json.dumps(scenario_data_to_save, indent=4)
         
         st.download_button(
-            label="Spara IMD Scenario (.json)",
+            label="Speichern IMD Szenario (.json)",
             data=json_data,
             file_name="iot_imd_scenario.json",
             mime="application/json",
-            help="Sparar alla aktuella reglagevärden till en fil."
+            help="Speichert alle aktuellen Reglerwerte in einer Datei."
         )
     st.markdown("---")
     
     col3, col4 = st.columns(2)
     
     with col3:
-        st.subheader("Initial Investering (IMD-mätare)")
-        pris_sensor_imd = st.number_input("Pris per Vattenmätare/Sensor (kr)", value=st.session_state.pris_sensor_imd, key='pris_sensor_imd')
-        pris_install_imd = st.number_input("Installation/Konfig per mätare (kr)", value=st.session_state.pris_install_imd, key='pris_install_imd') 
-        total_initial_imd = antal_lgh * (pris_sensor_imd + pris_install_imd) + (5 * pris_sensor_imd) # Lägger till 5 reservsensorer
+        st.subheader("Anfangsinvestition (IMD-Zähler)")
+        pris_sensor_imd = st.number_input("Preis pro Wasserzähler/Sensor (SEK)", value=st.session_state.pris_sensor_imd, key='pris_sensor_imd')
+        pris_install_imd = st.number_input("Installation/Konfig pro Zähler (SEK)", value=st.session_state.pris_install_imd, key='pris_install_imd') 
+        total_initial_imd = antal_lgh * (pris_sensor_imd + pris_install_imd) + (5 * pris_sensor_imd) # Fünf Reservesensoren hinzugefügt
         
     with col4:
-        st.subheader("Besparingsparametrar (Förbrukning)")
-        besparing_per_lgh_vatten = st.number_input("Vatten/Varmvatten-besparing per lgh/år (kr)", value=st.session_state.besparing_lgh_vatten, key='besparing_lgh_vatten')
-        besparing_per_lgh_underhall = st.number_input("Minskat underhåll/lgh (kr/år)", value=st.session_state.besparing_lgh_uh_imd, key='besparing_lgh_uh_imd')
+        st.subheader("Einsparparameter (Verbrauch)")
+        besparing_per_lgh_vatten = st.number_input("Wasser/Warmwasser-Einsparung pro Wohnung/Jahr (SEK)", value=st.session_state.besparing_lgh_vatten, key='besparing_lgh_vatten')
+        besparing_per_lgh_underhall = st.number_input("Reduzierte Wartung/Wohnung (SEK/Jahr)", value=st.session_state.besparing_lgh_uh_imd, key='besparing_lgh_uh_imd')
         
         total_besparing_imd = antal_lgh * (besparing_per_lgh_vatten + besparing_per_lgh_underhall)
         netto_imd = total_besparing_imd - total_drift_ar
         payback_imd = total_initial_imd / netto_imd if netto_imd > 0 else 0
 
     display_kpis(total_initial_imd, netto_imd, payback_imd)
-    fig_imd, _ = create_cashflow_chart(total_initial_imd, netto_imd, "Ackumulerat Kassaflöde (IMD Vatten)")
+    fig_imd, _ = create_cashflow_chart(total_initial_imd, netto_imd, "Kumulierter Cashflow (IMD Wasser)")
     st.plotly_chart(fig_imd, use_container_width=True)
 
-# --- FLIK 3: VATTENSKADESKYDD ---
+# --- KALKULATION 3: WASSERSCHADENSCHUTZ ---
 elif active_tab == "skada":
-    st.header("Vattenskadeskyddskalkyl")
-    st.markdown("Fokus: Undvika kostsamma vattenskador genom tidig upptäckt av läckagesensorer, t.ex. Elsys.")
+    st.header("Wasserschadenschutzkalkulation")
+    st.markdown("Fokus: Vermeidung kostspieliger Wasserschäden durch frühzeitige Erkennung mittels Leckagesensoren, z.B. Elsys.")
     st.markdown("---")
     
-    # --- FUNKTIONER FÖR SPARA/LADDA SCENARIO (VATTENSKADA) ---
-    st.subheader("Spara/Ladda Scenario (Vattenskada)")
+    # --- FUNKTIONEN FÜR SPEICHERN/LADEN SZENARIO (WASSERSCHADEN) ---
+    st.subheader("Szenario speichern/laden (Wasserschaden)")
     col_save, col_load = st.columns([1, 2])
     
-    # 1. Ladda Scenario
+    # 1. Szenario laden
     with col_load:
-        uploaded_file = st.file_uploader("Ladda Vattenskada Scenario (.json)", type="json", key='skada_scenario_uploader') 
+        uploaded_file = st.file_uploader("Wasserschaden Szenario laden (.json)", type="json", key='skada_scenario_uploader') 
         if uploaded_file is not None:
             try:
                 scenario_data = json.load(uploaded_file)
                 for key, value in scenario_data.items():
                     if key in st.session_state:
                         st.session_state[key] = value
-                st.success("Vattenskada Scenario laddat! Sidan laddas om för att visa de uppdaterade värdena.")
+                st.success("Wasserschaden Szenario geladen! Die Seite wird neu geladen, um die aktualisierten Werte anzuzeigen.")
                 st.experimental_rerun()
             except Exception as e:
-                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
+                st.error(f"Die Datei konnte nicht geladen werden. Überprüfen Sie das Format: {e}")
 
-    # 2. Spara Scenario
+    # 2. Szenario speichern
     with col_save:
         scenario_data_to_save = {
             'antal_lgh_main': st.session_state.antal_lgh_main, 'uh_per_sensor': st.session_state.uh_per_sensor,
@@ -334,42 +333,42 @@ elif active_tab == "skada":
         json_data = json.dumps(scenario_data_to_save, indent=4)
         
         st.download_button(
-            label="Spara Vattenskada Scenario (.json)",
+            label="Speichern Wasserschaden Szenario (.json)",
             data=json_data,
             file_name="iot_skada_scenario.json",
             mime="application/json",
-            help="Sparar alla aktuella reglagevärden till en fil."
+            help="Speichert alle aktuellen Reglerwerte in einer Datei."
         )
     st.markdown("---")
     
     col5, col6 = st.columns(2)
 
     with col5:
-        st.subheader("Initial Investering (Läckagesensor)")
-        pris_sensor_skada = st.number_input("Pris per Läckagesensor (kr)", value=st.session_state.pris_sensor_skada, key='pris_sensor_skada')
-        pris_install_skada = st.number_input("Installation/Konfig per sensor (kr)", value=st.session_state.pris_install_skada, key='pris_install_skada') 
+        st.subheader("Anfangsinvestition (Leckagesensor)")
+        pris_sensor_skada = st.number_input("Preis pro Leckagesensor (SEK)", value=st.session_state.pris_sensor_skada, key='pris_sensor_skada')
+        pris_install_skada = st.number_input("Installation/Konfig pro Sensor (SEK)", value=st.session_state.pris_install_skada, key='pris_install_skada') 
         total_initial_skada = antal_lgh * (pris_sensor_skada + pris_install_skada)
         
     with col6:
-        st.subheader("Besparingsparametrar (Skadereduktion)")
-        kostnad_vattenskada = st.number_input("Snittkostnad per vattenskada (kr)", value=st.session_state.kostnad_skada, key='kostnad_skada')
-        frekvens_vattenskada = st.number_input("Antal vattenskador per 1000 lgh/år (Utan IoT)", value=st.session_state.frekvens_skada, key='frekvens_skada')
-        besparing_procent_skador = st.slider("Förväntad Minskning av Skadekostnad (%)", 0.0, 90.0, value=st.session_state.besparing_skada_pct, step=5.0, key='besparing_skada_pct')
+        st.subheader("Einsparparameter (Schadensminderung)")
+        kostnad_vattenskada = st.number_input("Durchschnittliche Kosten pro Wasserschaden (SEK)", value=st.session_state.kostnad_skada, key='kostnad_skada')
+        frekvens_vattenskada = st.number_input("Anzahl der Wasserschäden pro 1000 Wohnungen/Jahr (Ohne IoT)", value=st.session_state.frekvens_skada, key='frekvens_skada')
+        besparing_procent_skador = st.slider("Erwartete Reduzierung der Schadenskosten (%)", 0.0, 90.0, value=st.session_state.besparing_skada_pct, step=5.0, key='besparing_skada_pct')
         
-        # Beräkning
+        # Berechnung
         tot_skadekostnad_utan_iot = (antal_lgh / 1000) * (frekvens_vattenskada * kostnad_vattenskada)
         besparing_skador_kr = tot_skadekostnad_utan_iot * (besparing_procent_skador / 100)
         
-        uh_besparing_skada_lgh = st.number_input("Övrig underhållsbesparing per lgh/år (kr)", value=st.session_state.uh_besparing_skada_lgh, key='uh_besparing_skada_lgh')
+        uh_besparing_skada_lgh = st.number_input("Sonstige Wartungseinsparungen pro Wohnung/Jahr (SEK)", value=st.session_state.uh_besparing_skada_lgh, key='uh_besparing_skada_lgh')
         
         total_besparing_skada = besparing_skador_kr + (antal_lgh * uh_besparing_skada_lgh)
         netto_skada = total_besparing_skada - total_drift_ar
         payback_skada = total_initial_skada / netto_skada if netto_skada > 0 else 0
 
     display_kpis(total_initial_skada, netto_skada, payback_skada)
-    fig_skada, _ = create_cashflow_chart(total_initial_skada, netto_skada, "Ackumulerat Kassaflöde (Vattenskadeskydd)")
+    fig_skada, _ = create_cashflow_chart(total_initial_skada, netto_skada, "Kumulierter Cashflow (Wasserschadenschutz)")
     st.plotly_chart(fig_skada, use_container_width=True)
     
-    with st.expander("Beräkningsdetaljer"):
-        st.write(f"Besparing från undvikna skadekostnader ({besparing_procent_skador:.1f}% av {tot_skadekostnad_utan_iot:,.0f} kr): **{besparing_skador_kr:,.0f} kr**")
-        st.write(f"Övrig underhållsbesparing (från Excel): **{antal_lgh * uh_besparing_skada_lgh:,.0f} kr**")
+    with st.expander("Berechnungsdetails"):
+        st.write(f"Einsparung durch vermiedene Schadenskosten ({besparing_procent_skador:.1f}% von {tot_skadekostnad_utan_iot:,.0f} SEK): **{besparing_skador_kr:,.0f} SEK**")
+        st.write(f"Sonstige Wartungseinsparungen (aus Excel): **{antal_lgh * uh_besparing_skada_lgh:,.0f} SEK**")
