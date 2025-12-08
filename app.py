@@ -63,14 +63,11 @@ def display_kpis_5_temp(initial, netto, payback, besparing_lgh_ar, total_drift_a
     row1_kpi_col3.metric("Årlig Driftkostnad (Fastighet)", f"{total_drift_ar:,.0f} kr".replace(",", " "), delta_color="inverse")
     
     # RAD 2: (3 kolumner: Netto Besparing, Payback, TOM/NULL-kolumn för linjering)
-    # Genom att använda st.columns(3) tvingas kolumnerna att ha samma bredd som rad 1.
     row2_kpi_col1, row2_kpi_col2, row2_kpi_col3 = st.columns(3)
     
     row2_kpi_col1.metric("Årlig Nettobesparing (Fastighet)", f"{netto:,.0f} kr".replace(",", " "), delta_color="normal")
     row2_kpi_col2.metric("Payback-tid", f"{payback:.1f} år" if payback > 0 else "N/A")
-    
-    # NULL-KOLUMN: Vi lägger inte in något i col3, men Streamlit behåller utrymmet
-    # row2_kpi_col3.metric(" ", " ") # Lämnas tom för att fungera som spacer
+    # row2_kpi_col3 lämnas tom för linjering
 
 
 # --- HUVUDAPPLIKATION ---
@@ -153,15 +150,17 @@ with st.sidebar:
     st.markdown("---")
     st.header("⚙️ Gemensamma Driftskostnader")
     
-    antal_lgh = st.number_input("Antal lägenheter i fastigheten", value=st.session_state.antal_lgh_main, step=10, key='antal_lgh_main')
+    # Använd tusentalsseparator för antal lägenheter
+    antal_lgh = st.number_input("Antal lägenheter i fastigheten", value=st.session_state.antal_lgh_main, step=10, key='antal_lgh_main', format="%i")
     
     st.subheader("Årliga Kostnader per Sensor/Lgh")
-    underhall_per_sensor = st.number_input("Underhåll/batteri per sensor/år (kr)", value=st.session_state.uh_per_sensor, key='uh_per_sensor')
-    lora_kostnad = st.number_input("LoRaWAN anslutning per sensor/år (kr)", value=st.session_state.lora_cost, key='lora_cost')
-    webiot_kostnad = st.number_input("Plattformskostnad per sensor/år (kr)", value=st.session_state.web_cost, key='web_cost')
+    underhall_per_sensor = st.number_input("Underhåll/batteri per sensor/år (kr)", value=st.session_state.uh_per_sensor, key='uh_per_sensor', format="%i")
+    lora_kostnad = st.number_input("LoRaWAN anslutning per sensor/år (kr)", value=st.session_state.lora_cost, key='lora_cost', format="%i")
+    webiot_kostnad = st.number_input("Plattformskostnad per sensor/år (kr)", value=st.session_state.web_cost, key='web_cost', format="%i")
     
     st.subheader("Fast Årlig Avgfit")
-    applikation_kostnad = st.number_input("Applikationskostnad (fast avgift/år)", value=st.session_state.app_cost, key='app_cost')
+    # Använd tusentalsseparator för fast avgift
+    applikation_kostnad = st.number_input("Applikationskostnad (fast avgift/år)", value=st.session_state.app_cost, key='app_cost', format="%i")
     
     # Total årlig drift (Används i alla kalkyler)
     total_drift_ar_per_sensor = underhall_per_sensor + lora_kostnad + webiot_kostnad
@@ -232,21 +231,25 @@ elif active_tab == "temp":
         
         with col1:
             st.subheader("Initial Investering")
-            # Använd session_state som initialt värde för att visa sparade värden vid laddning
-            pris_sensor_temp = st.number_input("Pris per Temp-sensor (kr)", value=st.session_state.pris_sensor_temp, key='pris_sensor_temp_form')
-            pris_install_temp = st.number_input("Installation/Konfig. per sensor (kr)", value=st.session_state.pris_install_temp, key='pris_install_temp_form') 
-            startkostnad_projekt_temp = st.number_input("Projektstartkostnad (kr)", value=st.session_state.startkostnad_temp, key='startkostnad_temp_form')
+            # --- TUSENTALSSEPARATOR HÄR ---
+            pris_sensor_temp = st.number_input("Pris per Temp-sensor (kr)", value=st.session_state.pris_sensor_temp, key='pris_sensor_temp_form', format="%i")
+            pris_install_temp = st.number_input("Installation/Konfig. per sensor (kr)", value=st.session_state.pris_install_temp, key='pris_install_temp_form', format="%i") 
+            startkostnad_projekt_temp = st.number_input("Projektstartkostnad (kr)", value=st.session_state.startkostnad_temp, key='startkostnad_temp_form', format="%i")
+            # -----------------------------
             
             # --- BERÄKNING: INITIAL KOSTNAD ---
             total_initial_temp = antal_lgh * (pris_sensor_temp * 1.01 + pris_install_temp) + startkostnad_projekt_temp 
 
         with col2:
             st.subheader("Besparingsparametrar")
-            kvm_snitt = st.number_input("Snittyta per lgh (kvm)", value=st.session_state.kvm_snitt, key='kvm_snitt_form')
+            # --- TUSENTALSSEPARATOR HÄR ---
+            # Besparingsfält (endast de med stora värden)
+            kvm_snitt = st.number_input("Snittyta per lgh (kvm)", value=st.session_state.kvm_snitt, key='kvm_snitt_form', format="%i")
             energiforbrukning_kvm = st.number_input("Förbrukning (kWh/m²/år)", value=st.session_state.kwh_kvm, key='kwh_kvm_form')
             energipris = st.number_input("Energipris (kr/kWh)", value=st.session_state.pris_kwh, key='pris_kwh_form')
             besparing_procent = st.slider("Förväntad energibesparing (%)", 0.0, 15.0, value=st.session_state.besparing_temp, step=0.1, key='besparing_temp_form')
-            underhall_besparing_lgh = st.number_input("Minskat underhåll/lgh (kr/år)", value=st.session_state.uh_besparing_temp, key='uh_besparing_temp_form')
+            underhall_besparing_lgh = st.number_input("Minskat underhåll/lgh (kr/år)", value=st.session_state.uh_besparing_temp, key='uh_besparing_temp_form', format="%i")
+            # -----------------------------
             
             # --- BERÄKNING: NETTO/BESPARING ---
             total_kwh_fastighet = antal_lgh * kvm_snitt * energiforbrukning_kvm
@@ -266,8 +269,6 @@ elif active_tab == "temp":
             
             # Beräkning för KPI #1: Brutto Energibesparing/Lgh/år (536 kr)
             besparing_lgh_ar = (kvm_snitt * energiforbrukning_kvm * energipris * (besparing_procent / 100)) 
-            
-            # OBS: total_drift_ar kommer från sidofältet och är TOTAL (Fastighet)
 
 
         
@@ -343,15 +344,19 @@ elif active_tab == "imd":
         
         with col3:
             st.subheader("Initial Investering (IMD-mätare)")
-            pris_sensor_imd = st.number_input("Pris per Vattenmätare/Sensor (kr)", value=st.session_state.pris_sensor_imd, key='pris_sensor_imd_form')
-            pris_install_imd = st.number_input("Installation/Konfig per mätare (kr)", value=st.session_state.pris_install_imd, key='pris_install_imd_form') 
+            # --- TUSENTALSSEPARATOR HÄR ---
+            pris_sensor_imd = st.number_input("Pris per Vattenmätare/Sensor (kr)", value=st.session_state.pris_sensor_imd, key='pris_sensor_imd_form', format="%i")
+            pris_install_imd = st.number_input("Installation/Konfig per mätare (kr)", value=st.session_state.pris_install_imd, key='pris_install_imd_form', format="%i") 
+            # -----------------------------
             
             total_initial_imd = antal_lgh * (pris_sensor_imd + pris_install_imd) + (5 * pris_sensor_imd) 
             
         with col4:
             st.subheader("Besparingsparametrar (Förbrukning)")
-            besparing_per_lgh_vatten = st.number_input("Vatten/Varmvatten-besparing per lgh/år (kr)", value=st.session_state.besparing_lgh_vatten, key='besparing_lgh_vatten_form')
-            besparing_per_lgh_underhall = st.number_input("Minskat underhåll/lgh (kr/år)", value=st.session_state.besparing_lgh_uh_imd, key='besparing_lgh_uh_imd_form')
+            # --- TUSENTALSSEPARATOR HÄR ---
+            besparing_per_lgh_vatten = st.number_input("Vatten/Varmvatten-besparing per lgh/år (kr)", value=st.session_state.besparing_lgh_vatten, key='besparing_lgh_vatten_form', format="%i")
+            besparing_per_lgh_underhall = st.number_input("Minskat underhåll/lgh (kr/år)", value=st.session_state.besparing_lgh_uh_imd, key='besparing_lgh_uh_imd_form', format="%i")
+            # -----------------------------
             
             total_besparing_imd = antal_lgh * (besparing_per_lgh_vatten + besparing_per_lgh_underhall)
             netto_imd = total_besparing_imd - total_drift_ar
@@ -422,17 +427,21 @@ elif active_tab == "skada":
 
         with col5:
             st.subheader("Initial Investering (Läckagesensor)")
-            pris_sensor_skada = st.number_input("Pris per Läckagesensor (kr)", value=st.session_state.pris_sensor_skada, key='pris_sensor_skada_form')
-            pris_install_skada = st.number_input("Installation/Konfig per sensor (kr)", value=st.session_state.pris_install_skada, key='pris_install_skada_form') 
+            # --- TUSENTALSSEPARATOR HÄR ---
+            pris_sensor_skada = st.number_input("Pris per Läckagesensor (kr)", value=st.session_state.pris_sensor_skada, key='pris_sensor_skada_form', format="%i")
+            pris_install_skada = st.number_input("Installation/Konfig per sensor (kr)", value=st.session_state.pris_install_skada, key='pris_install_skada_form', format="%i") 
+            # -----------------------------
             
             total_initial_skada = antal_lgh * (pris_sensor_skada + pris_install_skada)
             
         with col6:
             st.subheader("Besparingsparametrar (Skadereduktion)")
-            kostnad_vattenskada = st.number_input("Snittkostnad per vattenskada (kr)", value=st.session_state.kostnad_skada, key='kostnad_skada_form')
-            frekvens_vattenskada = st.number_input("Antal vattenskador per 1000 lgh/år (Utan IoT)", value=st.session_state.frekvens_skada, key='frekvens_skada_form')
+            # --- TUSENTALSSEPARATOR HÄR ---
+            kostnad_vattenskada = st.number_input("Snittkostnad per vattenskada (kr)", value=st.session_state.kostnad_skada, key='kostnad_skada_form', format="%i")
+            frekvens_vattenskada = st.number_input("Antal vattenskador per 1000 lgh/år (Utan IoT)", value=st.session_state.frekvens_skada, key='frekvens_skada_form', format="%i")
             besparing_procent_skador = st.slider("Förväntad Minskning av Skadekostnad (%)", 0.0, 90.0, value=st.session_state.besparing_skada_pct, step=5.0, key='besparing_skada_pct_form')
-            uh_besparing_skada_lgh = st.number_input("Övrig underhållsbesparing per lgh/år (kr)", value=st.session_state.uh_besparing_skada_lgh, key='uh_besparing_skada_lgh_form')
+            uh_besparing_skada_lgh = st.number_input("Övrig underhållsbesparing per lgh/år (kr)", value=st.session_state.uh_besparing_skada_lgh, key='uh_besparing_skada_lgh_form', format="%i")
+            # -----------------------------
             
             tot_skadekostnad_utan_iot = (antal_lgh / 1000) * (frekvens_vattenskada * kostnad_vattenskada)
             besparing_skador_kr = tot_skadekostnad_utan_iot * (besparing_procent_skador / 100)
