@@ -165,7 +165,7 @@ if active_tab == "":
     st.info("👋 Välkommen! Vänligen välj en kalkyl i sidofältet till vänster (t.ex. '🌡️ Temperatur & Energi') för att börja beräkna ROI.")
     st.snow() 
 
-# --- FLIK 1: TEMPERATUR & ENERGI (Text OVANFÖR boxen) ---
+# --- FLIK 1: TEMPERATUR & ENERGI (Text OVANFÖR boxen, litet typsnitt) ---
 elif active_tab == "temp":
     st.header("Temperatur- och Energikalkyl")
     st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
@@ -195,10 +195,10 @@ elif active_tab == "temp":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
     
-    # 2. Ladda-knapp (Höger kolumn - Text OVANFÖR)
+    # 2. Ladda-knapp (Höger kolumn - Text OVANFÖR, ÄNDRAD FRÅN ###)
     with col_load:
-        # ÅTERSTÄLLD: Texten ovanför boxen
-        st.markdown("### Ladda Temperatur Scenario (.json)")
+        # KORRIGERAT: Endast st.markdown (mindre typsnitt)
+        st.markdown("Ladda Temperatur Scenario (.json)")
         
         # VIKTIGT: Tom etikett för att dölja Streamlits standardetikett 
         uploaded_file = st.file_uploader(label="", type="json", key='temp_scenario_uploader') 
@@ -265,13 +265,13 @@ elif active_tab == "temp":
             st.session_state.uh_besparing_temp = underhall_besparing_lgh
 
     # --- RESULTAT DISPLAY (Utanför Form) ---
-    # ANVÄND NYA display_kpis_4_temp
+    # ANVÄND display_kpis_4_temp
     display_kpis_4_temp(total_initial_temp, netto_temp, payback_temp, besparing_lgh_ar)
     
     fig_temp, _ = create_cashflow_chart(total_initial_temp, netto_temp, "Ackumulerat Kassaflöde (Temperatur)")
     st.plotly_chart(fig_temp, use_container_width=True)
 
-# --- FLIK 2: IMD: VATTENFÖRBRUKNING (Text OVANFÖR boxen) ---
+# --- FLIK 2: IMD: VATTENFÖRBRUKNING (Text OVANFÖR boxen, litet typsnitt) ---
 elif active_tab == "imd":
     st.header("IMD: Vattenförbrukningskalkyl")
     st.markdown("Fokus: Minska vatten- och varmvattenförbrukning genom individuell mätning och debitering (IMD), t.ex. Quandify.")
@@ -299,10 +299,10 @@ elif active_tab == "imd":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
     
-    # 2. Ladda-knapp (Höger kolumn - Text OVANFÖR)
+    # 2. Ladda-knapp (Höger kolumn - Text OVANFÖR, ÄNDRAD FRÅN ###)
     with col_load:
-        # ÅTERSTÄLLD: Texten ovanför boxen
-        st.markdown("### Ladda IMD Scenario (.json)")
+        # KORRIGERAT: Endast st.markdown (mindre typsnitt)
+        st.markdown("Ladda IMD Scenario (.json)")
         
         uploaded_file = st.file_uploader(label="", type="json", key='imd_scenario_uploader') 
 
@@ -348,7 +348,7 @@ elif active_tab == "imd":
     fig_imd, _ = create_cashflow_chart(total_initial_imd, netto_imd, "Ackumulerat Kassaflöde (IMD Vatten)")
     st.plotly_chart(fig_imd, use_container_width=True)
 
-# --- FLIK 3: VATTENSKADESKYDD (Text OVANFÖR boxen) ---
+# --- FLIK 3: VATTENSKADESKYDD (Text OVANFÖR boxen, litet typsnitt) ---
 elif active_tab == "skada":
     st.header("Vattenskadeskyddskalkyl")
     st.markdown("Fokus: Undvika kostsamma vattenskador genom tidig upptäckt av läckagesensorer, t.ex. Elsys.")
@@ -377,10 +377,10 @@ elif active_tab == "skada":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
         
-    # 2. Ladda-knapp (Höger kolumn - Text OVANFÖR)
+    # 2. Ladda-knapp (Höger kolumn - Text OVANFÖR, ÄNDRAD FRÅN ###)
     with col_load:
-        # ÅTERSTÄLLD: Texten ovanför boxen
-        st.markdown("### Ladda Vattenskada Scenario (.json)")
+        # KORRIGERAT: Endast st.markdown (mindre typsnitt)
+        st.markdown("Ladda Vattenskada Scenario (.json)")
         
         uploaded_file = st.file_uploader(label="", type="json", key='skada_scenario_uploader') 
 
