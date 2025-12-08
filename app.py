@@ -45,22 +45,32 @@ def display_kpis_3(initial, netto, payback):
     col2_kpi.metric("Årlig Nettobesparing", f"{netto:,.0f} kr".replace(",", " "), delta_color="normal")
     col3_kpi.metric("Payback-tid", f"{payback:.1f} år" if payback > 0 else "N/A")
     
-# Funktion för att visa KPIer för Temp (4 kolumner, inkl. Besparing/Lgh/år)
-def display_kpis_4_temp(initial, netto, payback, besparing_lgh_ar):
-    """Visar de fyra nyckeltalen, inklusive besparing per lägenhet."""
-    col1_kpi, col2_kpi, col3_kpi, col4_kpi = st.columns(4)
+# Ny funktion för att visa KPIer för Temp (5 kolumner, uppdelat på två rader för tydligare Brutto/Netto)
+def display_kpis_5_temp(initial, netto, payback, besparing_lgh_ar, drift_lgh_ar):
+    """Visar de fem nyckeltalen, inklusive besparing och driftkostnad per lägenhet."""
+    # Rad 1: Investering, Bruttobesparing och Driftkostnad
+    row1_kpi_col1, row1_kpi_col2, row1_kpi_col3 = st.columns(3)
+    
+    # Rad 2: Nettoresultat
+    row2_kpi_col1, row2_kpi_col2 = st.columns(2)
+
     initial = initial if initial is not None and initial >= 0 else 0
+    besparing_lgh_ar = besparing_lgh_ar if besparing_lgh_ar is not None else 0
+    drift_lgh_ar = drift_lgh_ar if drift_lgh_ar is not None else 0
     netto = netto if netto is not None else 0
     payback = payback if payback is not None and payback >= 0 else 0
-    besparing_lgh_ar = besparing_lgh_ar if besparing_lgh_ar is not None else 0
-
-    col1_kpi.metric("Total Investering", f"{initial:,.0f} kr".replace(",", " "))
-    col2_kpi.metric("Årlig Nettobesparing", f"{netto:,.0f} kr".replace(",", " "), delta_color="normal")
     
-    # KORRIGERAD RUBRIK: För att förtydliga att detta är Brutto Energibesparing
-    col3_kpi.metric("Energibesparing/Lgh/år", f"{besparing_lgh_ar:,.0f} kr".replace(",", " "), delta_color="normal")
-
-    col4_kpi.metric("Payback-tid", f"{payback:.1f} år" if payback > 0 else "N/A")
+    row1_kpi_col1.metric("Total Investering", f"{initial:,.0f} kr".replace(",", " "))
+    
+    # BRUTTO-BESPARING
+    row1_kpi_col2.metric("Brutto Energibesparing/Lgh/år", f"{besparing_lgh_ar:,.0f} kr".replace(",", " "), delta_color="normal")
+    
+    # DRIFTKOSTNAD
+    row1_kpi_col3.metric("Årlig Driftkostnad/Lgh", f"{drift_lgh_ar:,.0f} kr".replace(",", " "), delta_color="inverse")
+    
+    # NETTO-RESULTAT (Hela fastigheten)
+    row2_kpi_col1.metric("Årlig Nettobesparing (Fastighet)", f"{netto:,.0f} kr".replace(",", " "), delta_color="normal")
+    row2_kpi_col2.metric("Payback-tid", f"{payback:.1f} år" if payback > 0 else "N/A")
 
 
 # --- HUVUDAPPLIKATION ---
@@ -195,10 +205,10 @@ elif active_tab == "temp":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
     
-    # 2. Ladda-knapp (Höger kolumn - Kompakt Layout)
+    # 2. Ladda-knapp (Höger kolumn - KOMPAKT LAYOUT FIX)
     with col_load:
-        # KORRIGERAT: st.caption för kompakt layout och minimerat mellanrum
-        st.caption("Ladda Temperatur Scenario (.json)")
+        # KORRIGERAT: Använd st.markdown med styling för minimalt avstånd
+        st.markdown('<p style="font-size: 0.9em; margin-bottom: 0px;">Ladda Temperatur Scenario (.json)</p>', unsafe_allow_html=True)
         
         # VIKTIGT: Tom etikett för att dölja Streamlits standardetikett 
         uploaded_file = st.file_uploader(label="", type="json", key='temp_scenario_uploader') 
@@ -254,9 +264,11 @@ elif active_tab == "temp":
             netto_temp = total_besparing_temp - total_drift_ar
             payback_temp = total_initial_temp / netto_temp if netto_temp > 0 else 0
             
-            # KORRIGERAD BERÄKNING för Besparing/Lgh/år: ENDAST ENERGIBESPARING
-            # Detta matchar beräkningen i din Excel: 67*130.6*(1.02/100)*(6/100) = 536.00 kr
+            # Beräkning för KPI #1: Brutto Energibesparing/Lgh/år (536 kr)
             besparing_lgh_ar = (kvm_snitt * energiforbrukning_kvm * energipris * (besparing_procent / 100)) 
+            
+            # Beräkning för KPI #2: Årlig Driftkostnad/Lgh
+            drift_lgh_ar = total_drift_ar / antal_lgh if antal_lgh > 0 else 0
 
 
         
@@ -273,8 +285,10 @@ elif active_tab == "temp":
             st.session_state.uh_besparing_temp = underhall_besparing_lgh
 
     # --- RESULTAT DISPLAY (Utanför Form) ---
-    display_kpis_4_temp(total_initial_temp, netto_temp, payback_temp, besparing_lgh_ar)
+    # ANVÄND NY FUNKTION MED 5 KPI:ER
+    display_kpis_5_temp(total_initial_temp, netto_temp, payback_temp, besparing_lgh_ar, drift_lgh_ar)
     
+    st.markdown("---")
     fig_temp, _ = create_cashflow_chart(total_initial_temp, netto_temp, "Ackumulerat Kassaflöde (Temperatur)")
     st.plotly_chart(fig_temp, use_container_width=True)
 
@@ -306,10 +320,10 @@ elif active_tab == "imd":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
     
-    # 2. Ladda-knapp (Höger kolumn - Kompakt Layout)
+    # 2. Ladda-knapp (Höger kolumn - KOMPAKT LAYOUT FIX)
     with col_load:
-        # KORRIGERAT: st.caption för kompakt layout och minimerat mellanrum
-        st.caption("Ladda IMD Scenario (.json)")
+        # KORRIGERAT: Använd st.markdown med styling för minimalt avstånd
+        st.markdown('<p style="font-size: 0.9em; margin-bottom: 0px;">Ladda IMD Scenario (.json)</p>', unsafe_allow_html=True)
         
         uploaded_file = st.file_uploader(label="", type="json", key='imd_scenario_uploader') 
 
@@ -352,6 +366,7 @@ elif active_tab == "imd":
 
     # ANVÄND display_kpis_3 för IMD
     display_kpis_3(total_initial_imd, netto_imd, payback_imd)
+    st.markdown("---")
     fig_imd, _ = create_cashflow_chart(total_initial_imd, netto_imd, "Ackumulerat Kassaflöde (IMD Vatten)")
     st.plotly_chart(fig_imd, use_container_width=True)
 
@@ -384,10 +399,10 @@ elif active_tab == "skada":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
         
-    # 2. Ladda-knapp (Höger kolumn - Kompakt Layout)
+    # 2. Ladda-knapp (Höger kolumn - KOMPAKT LAYOUT FIX)
     with col_load:
-        # KORRIGERAT: st.caption för kompakt layout och minimerat mellanrum
-        st.caption("Ladda Vattenskada Scenario (.json)")
+        # KORRIGERAT: Använd st.markdown med styling för minimalt avstånd
+        st.markdown('<p style="font-size: 0.9em; margin-bottom: 0px;">Ladda Vattenskada Scenario (.json)</p>', unsafe_allow_html=True)
         
         uploaded_file = st.file_uploader(label="", type="json", key='skada_scenario_uploader') 
 
@@ -437,7 +452,7 @@ elif active_tab == "skada":
 
     # ANVÄND display_kpis_3 för Skada
     display_kpis_3(total_initial_skada, netto_skada, payback_skada)
-    
+    st.markdown("---")
     fig_skada, _ = create_cashflow_chart(total_initial_skada, netto_skada, "Ackumulerat Kassaflöde (Vattenskadeskydd)")
     st.plotly_chart(fig_skada, use_container_width=True)
     
