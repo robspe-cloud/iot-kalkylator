@@ -191,6 +191,9 @@ elif active_tab == "temp":
     st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
     st.markdown("---")
     
+    # --- NY RUBRIK FÖR SCENARIOHANTERING ---
+    st.subheader("💾 Spara och Ladda Scenario")
+    
     # --- SPARA/LADDA SCENARIO FUNKTION ---
     col_save, col_load = st.columns([1, 2])
     
@@ -296,7 +299,7 @@ elif active_tab == "temp":
             st.session_state.uh_besparing_temp = underhall_besparing_lgh
 
     # --- RESULTAT DISPLAY (Utanför Form) ---
-    # ANVÄND KORRIGERAD FUNKTION
+    st.subheader("📊 Nyckeltal (KPIer) & ROI-Resultat") 
     display_kpis_5_temp(total_initial_temp, netto_temp, payback_temp, besparing_lgh_ar, total_drift_ar)
     
     st.markdown("---")
@@ -308,6 +311,9 @@ elif active_tab == "imd":
     st.header("IMD: Vattenförbrukningskalkyl")
     st.markdown("Fokus: Minska vatten- och varmvattenförbrukning genom individuell mätning och debitering (IMD), t.ex. Quandify.")
     st.markdown("---")
+
+    # --- NY RUBRIK FÖR SCENARIOHANTERING ---
+    st.subheader("💾 Spara och Ladda Scenario") 
     
     # --- SPARA/LADDA SCENARIO FUNKTION ---
     col_save, col_load = st.columns([1, 2])
@@ -379,6 +385,7 @@ elif active_tab == "imd":
             st.session_state.besparing_lgh_vatten = besparing_per_lgh_vatten
             st.session_state.besparing_lgh_uh_imd = besparing_per_lgh_underhall
 
+    st.subheader("📊 Nyckeltal (KPIer) & ROI-Resultat")
     # ANVÄND display_kpis_3 för IMD
     display_kpis_3(total_initial_imd, netto_imd, payback_imd)
     st.markdown("---")
@@ -390,6 +397,9 @@ elif active_tab == "skada":
     st.header("Vattenskadeskyddskalkyl")
     st.markdown("Fokus: Undvika kostsamma vattenskador genom tidig upptäckt av läckagesensorer, t.ex. Elsys.")
     st.markdown("---")
+
+    # --- NY RUBRIK FÖR SCENARIOHANTERING ---
+    st.subheader("💾 Spara och Ladda Scenario") 
     
     # --- SPARA/LADDA SCENARIO FUNKTION ---
     col_save, col_load = st.columns([1, 2])
@@ -469,6 +479,7 @@ elif active_tab == "skada":
             st.session_state.besparing_skada_pct = besparing_procent_skador
             st.session_state.uh_besparing_skada_lgh = uh_besparing_skada_lgh
 
+    st.subheader("📊 Nyckeltal (KPIer) & ROI-Resultat")
     # ANVÄND display_kpis_3 för Skada
     display_kpis_3(total_initial_skada, netto_skada, payback_skada)
     st.markdown("---")
