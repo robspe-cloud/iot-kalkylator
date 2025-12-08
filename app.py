@@ -74,6 +74,7 @@ with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn")
 st.markdown("---")
 
 # --- INITIALISERING AV SESSION STATE ---
+# (Behåll Initialisering som i din version)
 
 if 'antal_lgh_main' not in st.session_state: st.session_state.antal_lgh_main = 1000
 if 'uh_per_sensor' not in st.session_state: st.session_state.uh_per_sensor = 100
@@ -104,6 +105,7 @@ if 'uh_besparing_skada_lgh' not in st.session_state: st.session_state.uh_bespari
 
 
 # --- NAVIGATION OCH SIDEBAR FÖR GEMENSAMMA INDATA ---
+# (Behåll Sidebar som i din version)
 
 with st.sidebar:
     st.header("🔎 Välj Kalkyl")
@@ -147,7 +149,7 @@ if active_tab == "":
     st.info("👋 Välkommen! Vänligen välj en kalkyl i sidofältet till vänster (t.ex. '🌡️ Temperatur & Energi') för att börja beräkna ROI.")
     st.snow() 
 
-# --- FLIK 1: TEMPERATUR & ENERGI ---
+# --- FLIK 1: TEMPERATUR & ENERGI (Korrigerad ordning för Spara/Ladda) ---
 elif active_tab == "temp":
     st.header("Temperatur- och Energikalkyl")
     st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
@@ -157,18 +159,7 @@ elif active_tab == "temp":
     st.subheader("Spara/Ladda Scenario (Temperatur)")
     col_save, col_load = st.columns([1, 2])
     
-    with col_load:
-        uploaded_file = st.file_uploader("Ladda Temperatur Scenario (.json)", type="json", key='temp_scenario_uploader')
-        if uploaded_file is not None:
-            try:
-                scenario_data = json.load(uploaded_file)
-                for key, value in scenario_data.items():
-                    if key in st.session_state:
-                        st.session_state[key] = value
-                st.success("Temperatur Scenario laddat! Klicka på 'Beräkna ROI' för att visa de nya resultaten.")
-            except Exception as e:
-                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
-
+    # 1. Spara-knapp (Vänster kolumn)
     with col_save:
         scenario_data_to_save = {
             'antal_lgh_main': st.session_state.antal_lgh_main, 'uh_per_sensor': st.session_state.uh_per_sensor,
@@ -188,6 +179,21 @@ elif active_tab == "temp":
             mime="application/json",
             help="Sparar alla aktuella reglagevärden till en fil."
         )
+    
+    # 2. Ladda-knapp (Höger kolumn - Visas under Spara i en bred layout)
+    with col_load:
+        # Flyttad Ladda-funktionalitet
+        uploaded_file = st.file_uploader("Ladda Temperatur Scenario (.json)", type="json", key='temp_scenario_uploader')
+        if uploaded_file is not None:
+            try:
+                scenario_data = json.load(uploaded_file)
+                for key, value in scenario_data.items():
+                    if key in st.session_state:
+                        st.session_state[key] = value
+                st.success("Temperatur Scenario laddat! Klicka på 'Beräkna ROI' för att visa de nya resultaten.")
+            except Exception as e:
+                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
+                
     st.markdown("---")
 
     
@@ -238,7 +244,7 @@ elif active_tab == "temp":
     fig_temp, _ = create_cashflow_chart(total_initial_temp, netto_temp, "Ackumulerat Kassaflöde (Temperatur)")
     st.plotly_chart(fig_temp, use_container_width=True)
 
-# --- FLIK 2: IMD: VATTENFÖRBRUKNING ---
+# --- FLIK 2: IMD: VATTENFÖRBRUKNING (Korrigerad ordning för Spara/Ladda) ---
 elif active_tab == "imd":
     st.header("IMD: Vattenförbrukningskalkyl")
     st.markdown("Fokus: Minska vatten- och varmvattenförbrukning genom individuell mätning och debitering (IMD), t.ex. Quandify.")
@@ -248,18 +254,7 @@ elif active_tab == "imd":
     st.subheader("Spara/Ladda Scenario (IMD)")
     col_save, col_load = st.columns([1, 2])
     
-    with col_load:
-        uploaded_file = st.file_uploader("Ladda IMD Scenario (.json)", type="json", key='imd_scenario_uploader') 
-        if uploaded_file is not None:
-            try:
-                scenario_data = json.load(uploaded_file)
-                for key, value in scenario_data.items():
-                    if key in st.session_state:
-                        st.session_state[key] = value
-                st.success("IMD Scenario laddat! Klicka på 'Beräkna ROI' för att visa de nya resultaten.")
-            except Exception as e:
-                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
-
+    # 1. Spara-knapp (Vänster kolumn)
     with col_save:
         scenario_data_to_save = {
             'antal_lgh_main': st.session_state.antal_lgh_main, 'uh_per_sensor': st.session_state.uh_per_sensor,
@@ -277,6 +272,20 @@ elif active_tab == "imd":
             mime="application/json",
             help="Sparar alla aktuella reglagevärden till en fil."
         )
+    
+    # 2. Ladda-knapp (Höger kolumn)
+    with col_load:
+        uploaded_file = st.file_uploader("Ladda IMD Scenario (.json)", type="json", key='imd_scenario_uploader') 
+        if uploaded_file is not None:
+            try:
+                scenario_data = json.load(uploaded_file)
+                for key, value in scenario_data.items():
+                    if key in st.session_state:
+                        st.session_state[key] = value
+                st.success("IMD Scenario laddat! Klicka på 'Beräkna ROI' för att visa de nya resultaten.")
+            except Exception as e:
+                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
+
     st.markdown("---")
 
     with st.form(key='imd_form'):
@@ -308,7 +317,7 @@ elif active_tab == "imd":
     fig_imd, _ = create_cashflow_chart(total_initial_imd, netto_imd, "Ackumulerat Kassaflöde (IMD Vatten)")
     st.plotly_chart(fig_imd, use_container_width=True)
 
-# --- FLIK 3: VATTENSKADESKYDD ---
+# --- FLIK 3: VATTENSKADESKYDD (Korrigerad ordning för Spara/Ladda) ---
 elif active_tab == "skada":
     st.header("Vattenskadeskyddskalkyl")
     st.markdown("Fokus: Undvika kostsamma vattenskador genom tidig upptäckt av läckagesensorer, t.ex. Elsys.")
@@ -318,18 +327,7 @@ elif active_tab == "skada":
     st.subheader("Spara/Ladda Scenario (Vattenskada)")
     col_save, col_load = st.columns([1, 2])
     
-    with col_load:
-        uploaded_file = st.file_uploader("Ladda Vattenskada Scenario (.json)", type="json", key='skada_scenario_uploader') 
-        if uploaded_file is not None:
-            try:
-                scenario_data = json.load(uploaded_file)
-                for key, value in scenario_data.items():
-                    if key in st.session_state:
-                        st.session_state[key] = value
-                st.success("Vattenskada Scenario laddat! Klicka på 'Beräkna ROI' för att visa de nya resultaten.")
-            except Exception as e:
-                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
-
+    # 1. Spara-knapp (Vänster kolumn)
     with col_save:
         scenario_data_to_save = {
             'antal_lgh_main': st.session_state.antal_lgh_main, 'uh_per_sensor': st.session_state.uh_per_sensor,
@@ -348,6 +346,20 @@ elif active_tab == "skada":
             mime="application/json",
             help="Sparar alla aktuella reglagevärden till en fil."
         )
+        
+    # 2. Ladda-knapp (Höger kolumn)
+    with col_load:
+        uploaded_file = st.file_uploader("Ladda Vattenskada Scenario (.json)", type="json", key='skada_scenario_uploader') 
+        if uploaded_file is not None:
+            try:
+                scenario_data = json.load(uploaded_file)
+                for key, value in scenario_data.items():
+                    if key in st.session_state:
+                        st.session_state[key] = value
+                st.success("Vattenskada Scenario laddat! Klicka på 'Beräkna ROI' för att visa de nya resultaten.")
+            except Exception as e:
+                st.error(f"Kunde inte ladda filen. Kontrollera formatet: {e}")
+
     st.markdown("---")
     
     with st.form(key='skada_form'):
