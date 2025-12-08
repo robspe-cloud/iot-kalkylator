@@ -3,6 +3,20 @@ import pandas as pd
 import plotly.graph_objects as go
 import json
 
+# --- START CSS INJECTION FÖR ATT DÖLJA TOPP-MENYN (GITHUB, SHARE, ETC.) ---
+# Denna metod döljer Streamlit's inbyggda toolbar i det övre högra hörnet.
+st.markdown("""
+<style>
+/* Döljer hela top-right toolbar (Inkluderar Share, GitHub och "...") */
+div[data-testid="stToolbar"] {
+    visibility: hidden;
+    height: 0;
+}
+</style>
+""", unsafe_allow_html=True)
+# --- SLUT CSS INJECTION ---
+
+
 # --- KONSTANTER OCH MAPPNING ---
 CALC_OPTIONS = {
     "🌡️ Temperatur & Energi": "temp", 
@@ -45,7 +59,7 @@ def display_kpis_3(initial, netto, payback):
     col2_kpi.metric("Årlig Nettobesparing", f"{netto:,.0f} kr".replace(",", " "), delta_color="normal")
     col3_kpi.metric("Payback-tid", f"{payback:.1f} år" if payback > 0 else "N/A")
     
-# Uppdaterad funktion för att visa KPIer för Temp (5 KPI:er i 3+3 layout)
+# KORRIGERAD FUNKTION: Linjerar med [1, 1, 1] breddförhållande
 def display_kpis_5_temp(initial, netto, payback, besparing_lgh_ar, total_drift_ar):
     """Visar de fem nyckeltalen, inkl. Brutto/Netto och TOTAL driftskostnad för fastigheten."""
     
@@ -55,19 +69,20 @@ def display_kpis_5_temp(initial, netto, payback, besparing_lgh_ar, total_drift_a
     netto = netto if netto is not None else 0
     payback = payback if payback is not None and payback >= 0 else 0
     
-    # RAD 1: (3 kolumner: Investering, Brutto Besparing, Driftkostnad)
-    row1_kpi_col1, row1_kpi_col2, row1_kpi_col3 = st.columns(3)
+    # RAD 1: Tvingar kolumnerna att ha 1:1:1 breddförhållande (33.3% vardera)
+    row1_kpi_col1, row1_kpi_col2, row1_kpi_col3 = st.columns([1, 1, 1])
     
     row1_kpi_col1.metric("Total Investering", f"{initial:,.0f} kr".replace(",", " "))
     row1_kpi_col2.metric("Brutto Energibesparing/Lgh/år", f"{besparing_lgh_ar:,.0f} kr".replace(",", " "), delta_color="normal")
     row1_kpi_col3.metric("Årlig Driftkostnad (Fastighet)", f"{total_drift_ar:,.0f} kr".replace(",", " "), delta_color="inverse")
     
-    # RAD 2: (3 kolumner: Netto Besparing, Payback, TOM/NULL-kolumn för linjering)
-    row2_kpi_col1, row2_kpi_col2, row2_kpi_col3 = st.columns(3)
+    # RAD 2: Tvingar kolumnerna att ha 1:1:1 breddförhållande (33.3% vardera)
+    # Col 3 lämnas tom för att linjera med Col 3 i Rad 1.
+    row2_kpi_col1, row2_kpi_col2, row2_kpi_col3 = st.columns([1, 1, 1])
     
     row2_kpi_col1.metric("Årlig Nettobesparing (Fastighet)", f"{netto:,.0f} kr".replace(",", " "), delta_color="normal")
     row2_kpi_col2.metric("Payback-tid", f"{payback:.1f} år" if payback > 0 else "N/A")
-    # row2_kpi_col3 lämnas tom för linjering
+    # row2_kpi_col3 lämnas tom
 
 
 # --- HUVUDAPPLIKATION ---
@@ -77,25 +92,33 @@ st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
 st.title("💰 IoT ROI Kalkylator")
 st.markdown("---")
 
-# --- ÅTERINFÖRD HJÄLP OCH INSTRUKTIONER (WIKI) ---
+# --- UPPDATERAD HJÄLP OCH INSTRUKTIONER (WIKI) ---
 with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn"):
     st.markdown("""
     Denna kalkylator hjälper dig att uppskatta **Return on Investment (ROI)** för olika IoT-lösningar i fastigheter.
 
+    ---
+
     ### 1. Välj Kalkyl
-    Använd sidofältet till vänster (`🔎 Välj Kalkyl`) för att växla mellan de tre analysområdena: **Temperatur & Energi**, **IMD Vattenförbrukning**, och **Vattenskadeskydd**.
+    * Använd sidofältet till vänster (**`🔎 Välj Kalkyl`**) för att växla mellan de tre analysområdena: **Temperatur & Energi**, **IMD Vattenförbrukning**, och **Vattenskadeskydd**.
+
+    ---
 
     ### 2. Gemensamma Kostnader (Sidebar)
-    * Fälten i sidofältet (`⚙️ Gemensamma Driftskostnader`) – som Antal lägenheter, underhållskostnader och fasta årliga avgifter – påverkar **alla tre** kalkylerna. Justera dem först.
+    * Fälten i sidofältet (**`⚙️ Gemensamma Driftskostnader`**) – som **Antal lägenheter**, underhållskostnader och fasta årliga avgifter – påverkar **alla tre** kalkylerna. Justera dessa först.
 
-    ### 3. Justera Scenariot
-    * I huvudfönstret för din valda kalkyl justerar du de **unika parametrarna** (t.ex. sensorpriser, installationskostnader och besparingsprocenter) för just det scenariot.
-    * Klicka på **"Beräkna ROI"** för att uppdatera resultatet.
+    ---
+
+    ### 3. Justera Scenariot & Beräkna
+    * I huvudfönstret för din valda kalkyl justerar du de **unika parametrarna** (t.ex. sensorpriser, installationskostnader och besparingsprocenter).
+    * **Viktigt:** Klicka på den röda knappen **"Beräkna ROI"** för att utvärdera ditt scenario och uppdatera alla KPI-mätare och kassaflödesgrafen.
+
+    ---
 
     ### 4. Spara och Ladda Scenarier (Dela Varianter)
-    Du kan spara dina exakta parameterinställningar för senare användning, arkivering eller jämförelser.
+    Du kan spara och ladda dina exakta parameterinställningar för senare användning, arkivering eller jämförelser:
     * **Spara:** Använd knappen **"Spara [Kalkylnamn] Scenario (.json)"** för att ladda ner en JSON-fil med alla aktuella inställningar för den aktiva kalkylen.
-    * **Ladda:** Använd filväljaren nedanför för att ladda en tidigare sparad fil.
+    * **Ladda:** Använd **filväljaren** direkt till höger om spara-knappen för att ladda en tidigare sparad fil. Efter laddning, klicka på **"Beräkna ROI"** för att aktivera de nya värdena.
     """)
 st.markdown("---")
 
@@ -285,7 +308,7 @@ elif active_tab == "temp":
             st.session_state.uh_besparing_temp = underhall_besparing_lgh
 
     # --- RESULTAT DISPLAY (Utanför Form) ---
-    # ANVÄND NY FUNKTION MED 5 KPI:ER
+    # ANVÄND KORRIGERAD FUNKTION
     display_kpis_5_temp(total_initial_temp, netto_temp, payback_temp, besparing_lgh_ar, total_drift_ar)
     
     st.markdown("---")
