@@ -3,19 +3,9 @@ import pandas as pd
 import plotly.graph_objects as go
 import json
 
-# --- START CSS INJECTION FÖR ATT DÖLJA TOPP-MENYN (GITHUB, SHARE, ETC.) ---
-# Denna metod döljer Streamlit's inbyggda toolbar i det övre högra hörnet.
-st.markdown("""
-<style>
-/* Döljer hela top-right toolbar (Inkluderar Share, GitHub och "...") */
-div[data-testid="stToolbar"] {
-    visibility: hidden;
-    height: 0;
-}
-</style>
-""", unsafe_allow_html=True)
-# --- SLUT CSS INJECTION ---
-
+# --- HUVUDAPPLIKATION STARTAR HÄR ---
+# st.set_page_config MÅSTE vara det första st-anropet.
+st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide") 
 
 # --- KONSTANTER OCH MAPPNING ---
 CALC_OPTIONS = {
@@ -85,9 +75,7 @@ def display_kpis_5_temp(initial, netto, payback, besparing_lgh_ar, total_drift_a
     # row2_kpi_col3 lämnas tom
 
 
-# --- HUVUDAPPLIKATION ---
-
-st.set_page_config(page_title="IoT ROI Kalkylator", layout="wide")
+# --- HUVUDAPPLIKATION FORTSÄTTER ---
 
 st.title("💰 IoT ROI Kalkylator")
 st.markdown("---")
