@@ -74,8 +74,6 @@ with st.expander("ℹ️ Instruktioner & Wiki – Hur du använder kalkylatorn")
 st.markdown("---")
 
 # --- INITIALISERING AV SESSION STATE ---
-# (Behåll Initialisering som i din version)
-
 if 'antal_lgh_main' not in st.session_state: st.session_state.antal_lgh_main = 1000
 if 'uh_per_sensor' not in st.session_state: st.session_state.uh_per_sensor = 100
 if 'lora_cost' not in st.session_state: st.session_state.lora_cost = 75
@@ -148,7 +146,7 @@ if active_tab == "":
     st.info("👋 Välkommen! Vänligen välj en kalkyl i sidofältet till vänster (t.ex. '🌡️ Temperatur & Energi') för att börja beräkna ROI.")
     st.snow() 
 
-# --- FLIK 1: TEMPERATUR & ENERGI (Korrigerad placering) ---
+# --- FLIK 1: TEMPERATUR & ENERGI (Text UNDER boxen) ---
 elif active_tab == "temp":
     st.header("Temperatur- och Energikalkyl")
     st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
@@ -178,10 +176,12 @@ elif active_tab == "temp":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
     
-    # 2. Ladda-knapp (Höger kolumn - Svensk text som "etikett")
+    # 2. Ladda-knapp (Höger kolumn - Text under)
     with col_load:
-        st.markdown("**Ladda Temperatur Scenario (.json)**") # <--- SVENSK TEXT SOM ETİKETT
-        uploaded_file = st.file_uploader("", type="json", key='temp_scenario_uploader')
+        uploaded_file = st.file_uploader(label="", type="json", key='temp_scenario_uploader') # st.file_uploader med tom etikett
+        
+        # NY TEXT PLACERAD UNDER UPLOADERN
+        st.markdown("*Ladda Temperatur Scenario (.json)*") 
         
         if uploaded_file is not None:
             try:
@@ -243,7 +243,7 @@ elif active_tab == "temp":
     fig_temp, _ = create_cashflow_chart(total_initial_temp, netto_temp, "Ackumulerat Kassaflöde (Temperatur)")
     st.plotly_chart(fig_temp, use_container_width=True)
 
-# --- FLIK 2: IMD: VATTENFÖRBRUKNING (Korrigerad placering) ---
+# --- FLIK 2: IMD: VATTENFÖRBRUKNING (Text UNDER boxen) ---
 elif active_tab == "imd":
     st.header("IMD: Vattenförbrukningskalkyl")
     st.markdown("Fokus: Minska vatten- och varmvattenförbrukning genom individuell mätning och debitering (IMD), t.ex. Quandify.")
@@ -271,10 +271,13 @@ elif active_tab == "imd":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
     
-    # 2. Ladda-knapp (Höger kolumn - Svensk text som "etikett")
+    # 2. Ladda-knapp (Höger kolumn - Text under)
     with col_load:
-        st.markdown("**Ladda IMD Scenario (.json)**") # <--- SVENSK TEXT SOM ETİKETT
-        uploaded_file = st.file_uploader("", type="json", key='imd_scenario_uploader') 
+        uploaded_file = st.file_uploader(label="", type="json", key='imd_scenario_uploader') 
+        
+        # NY TEXT PLACERAD UNDER UPLOADERN
+        st.markdown("*Ladda IMD Scenario (.json)*")
+
         if uploaded_file is not None:
             try:
                 scenario_data = json.load(uploaded_file)
@@ -316,7 +319,7 @@ elif active_tab == "imd":
     fig_imd, _ = create_cashflow_chart(total_initial_imd, netto_imd, "Ackumulerat Kassaflöde (IMD Vatten)")
     st.plotly_chart(fig_imd, use_container_width=True)
 
-# --- FLIK 3: VATTENSKADESKYDD (Korrigerad placering) ---
+# --- FLIK 3: VATTENSKADESKYDD (Text UNDER boxen) ---
 elif active_tab == "skada":
     st.header("Vattenskadeskyddskalkyl")
     st.markdown("Fokus: Undvika kostsamma vattenskador genom tidig upptäckt av läckagesensorer, t.ex. Elsys.")
@@ -345,10 +348,13 @@ elif active_tab == "skada":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
         
-    # 2. Ladda-knapp (Höger kolumn - Svensk text som "etikett")
+    # 2. Ladda-knapp (Höger kolumn - Text under)
     with col_load:
-        st.markdown("**Ladda Vattenskada Scenario (.json)**") # <--- SVENSK TEXT SOM ETİKETT
-        uploaded_file = st.file_uploader("", type="json", key='skada_scenario_uploader') 
+        uploaded_file = st.file_uploader(label="", type="json", key='skada_scenario_uploader') 
+        
+        # NY TEXT PLACERAD UNDER UPLOADERN
+        st.markdown("*Ladda Vattenskada Scenario (.json)*")
+
         if uploaded_file is not None:
             try:
                 scenario_data = json.load(uploaded_file)
