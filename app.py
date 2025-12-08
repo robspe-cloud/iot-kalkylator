@@ -148,14 +148,13 @@ if active_tab == "":
     st.info("👋 Välkommen! Vänligen välj en kalkyl i sidofältet till vänster (t.ex. '🌡️ Temperatur & Energi') för att börja beräkna ROI.")
     st.snow() 
 
-# --- FLIK 1: TEMPERATUR & ENERGI (Korrigerad: st.subheader borttagen) ---
+# --- FLIK 1: TEMPERATUR & ENERGI (Korrigerad placering) ---
 elif active_tab == "temp":
     st.header("Temperatur- och Energikalkyl")
     st.markdown("Fokus: Justerad värmedistribution, minskat underhåll, optimerad energi.")
     st.markdown("---")
     
-    # --- ÅTERINFÖRD: SPARA/LADDA SCENARIO FUNKTION ---
-    # st.subheader("Spara/Ladda Scenario (Temperatur)") <--- DENNA RAD ÄR BORTTAGEN
+    # --- SPARA/LADDA SCENARIO FUNKTION ---
     col_save, col_load = st.columns([1, 2])
     
     # 1. Spara-knapp (Vänster kolumn)
@@ -179,9 +178,11 @@ elif active_tab == "temp":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
     
-    # 2. Ladda-knapp (Höger kolumn - Etiketten är tom/gömd)
+    # 2. Ladda-knapp (Höger kolumn - Svensk text som "etikett")
     with col_load:
+        st.markdown("**Ladda Temperatur Scenario (.json)**") # <--- SVENSK TEXT SOM ETİKETT
         uploaded_file = st.file_uploader("", type="json", key='temp_scenario_uploader')
+        
         if uploaded_file is not None:
             try:
                 scenario_data = json.load(uploaded_file)
@@ -242,14 +243,13 @@ elif active_tab == "temp":
     fig_temp, _ = create_cashflow_chart(total_initial_temp, netto_temp, "Ackumulerat Kassaflöde (Temperatur)")
     st.plotly_chart(fig_temp, use_container_width=True)
 
-# --- FLIK 2: IMD: VATTENFÖRBRUKNING (Korrigerad: st.subheader borttagen) ---
+# --- FLIK 2: IMD: VATTENFÖRBRUKNING (Korrigerad placering) ---
 elif active_tab == "imd":
     st.header("IMD: Vattenförbrukningskalkyl")
     st.markdown("Fokus: Minska vatten- och varmvattenförbrukning genom individuell mätning och debitering (IMD), t.ex. Quandify.")
     st.markdown("---")
     
-    # --- ÅTERINFÖRD: SPARA/LADDA SCENARIO FUNKTION ---
-    # st.subheader("Spara/Ladda Scenario (IMD)") <--- DENNA RAD ÄR BORTTAGEN
+    # --- SPARA/LADDA SCENARIO FUNKTION ---
     col_save, col_load = st.columns([1, 2])
     
     # 1. Spara-knapp (Vänster kolumn)
@@ -271,8 +271,9 @@ elif active_tab == "imd":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
     
-    # 2. Ladda-knapp (Höger kolumn - Etiketten är tom/gömd)
+    # 2. Ladda-knapp (Höger kolumn - Svensk text som "etikett")
     with col_load:
+        st.markdown("**Ladda IMD Scenario (.json)**") # <--- SVENSK TEXT SOM ETİKETT
         uploaded_file = st.file_uploader("", type="json", key='imd_scenario_uploader') 
         if uploaded_file is not None:
             try:
@@ -315,14 +316,13 @@ elif active_tab == "imd":
     fig_imd, _ = create_cashflow_chart(total_initial_imd, netto_imd, "Ackumulerat Kassaflöde (IMD Vatten)")
     st.plotly_chart(fig_imd, use_container_width=True)
 
-# --- FLIK 3: VATTENSKADESKYDD (Korrigerad: st.subheader borttagen) ---
+# --- FLIK 3: VATTENSKADESKYDD (Korrigerad placering) ---
 elif active_tab == "skada":
     st.header("Vattenskadeskyddskalkyl")
     st.markdown("Fokus: Undvika kostsamma vattenskador genom tidig upptäckt av läckagesensorer, t.ex. Elsys.")
     st.markdown("---")
     
-    # --- ÅTERINFÖRD: SPARA/LADDA SCENARIO FUNKTION ---
-    # st.subheader("Spara/Ladda Scenario (Vattenskada)") <--- DENNA RAD ÄR BORTTAGEN
+    # --- SPARA/LADDA SCENARIO FUNKTION ---
     col_save, col_load = st.columns([1, 2])
     
     # 1. Spara-knapp (Vänster kolumn)
@@ -345,8 +345,9 @@ elif active_tab == "skada":
             help="Sparar alla aktuella reglagevärden till en fil."
         )
         
-    # 2. Ladda-knapp (Höger kolumn - Etiketten är tom/gömd)
+    # 2. Ladda-knapp (Höger kolumn - Svensk text som "etikett")
     with col_load:
+        st.markdown("**Ladda Vattenskada Scenario (.json)**") # <--- SVENSK TEXT SOM ETİKETT
         uploaded_file = st.file_uploader("", type="json", key='skada_scenario_uploader') 
         if uploaded_file is not None:
             try:
